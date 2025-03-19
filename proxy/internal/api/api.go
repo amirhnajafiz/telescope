@@ -18,6 +18,9 @@ func (a *API) Register(app *fiber.App) {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
+	// define the health check endpoint
+	app.Get("/healthz", a.healthCheck)
+
 	// enable logging for all endpoints
 	app.Use(logger.New(logger.Config{
 		TimeZone: "Local",
