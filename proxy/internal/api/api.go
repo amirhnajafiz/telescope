@@ -4,10 +4,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"go.uber.org/zap"
 )
 
 // API struct holds endpoint functions of the proxy server
-type API struct{}
+type API struct {
+	Logr *zap.Logger
+}
 
 // Register method takes a fiber.App instance and defines all the endpoints
 func (a *API) Register(app *fiber.App) {
@@ -23,7 +26,9 @@ func (a *API) Register(app *fiber.App) {
 
 	// enable logging for all endpoints
 	app.Use(logger.New(logger.Config{
-		TimeZone: "Local",
-		Format:   "${time} - ${status} - ${method} ${path} ${latency}\n",
+		Format: "${status} - ${method} ${path} ${latency}",
+		Done: func(c *fiber.Ctx, logString []byte) {
+			a.Logr.Info(string(logString))
+		},
 	}))
 }
