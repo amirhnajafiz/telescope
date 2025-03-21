@@ -6,8 +6,10 @@ import (
 	"github.com/amirhnajafiz/telescope/internal/api"
 	"github.com/amirhnajafiz/telescope/internal/config"
 	"github.com/amirhnajafiz/telescope/internal/logr"
+	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
 
 	"github.com/gofiber/fiber/v2"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func main() {
@@ -23,12 +25,24 @@ func main() {
 		panic(err)
 	}
 
+	// create a new otel tracer
+	var tr trace.Tracer
+	if len(cfg.Jaeger) > 0 {
+		tr, err = tracing.NewProductionTracer(cfg.Jaeger)
+	} else {
+		tr, err = tracing.NewDevelopmentTracer()
+	}
+	if err != nil {
+		panic(err)
+	}
+
 	// create a new fiber app
 	app := fiber.New()
 
 	// create a new API instance
 	apiInstance := api.API{
-		Logr: logger.Named("api"),
+		Logr:   logger.Named("api"),
+		Tracer: tr,
 	}
 
 	// register the API endpoints

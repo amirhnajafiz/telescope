@@ -4,8 +4,9 @@ import "github.com/caarlos0/env/v10"
 
 // Config represents the configuration for the application
 type Config struct {
-	Port  int  `env:"TELESCOPE_PORT" envDefault:"8080"`
-	Debug bool `env:"TELESCOPE_DEBUG" envDefault:"false"`
+	Port   int    `env:"TELESCOPE_PORT" envDefault:"8080"`
+	Debug  bool   `env:"TELESCOPE_DEBUG" envDefault:"false"`
+	Jaeger string `env:"TELESCOPE_JAEGER" envDefault:""`
 }
 
 // LoadConfigs loads the configuration from environment variables
