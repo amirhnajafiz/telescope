@@ -2,13 +2,13 @@ package api
 
 import "github.com/gofiber/fiber/v2"
 
-// uploadContent handles the upload of content, used for uploading
-func (a *API) uploadContent(ctx *fiber.Ctx) error {
+// newContent handles the upload of content, used for uploading
+func (a *API) newContent(ctx *fiber.Ctx) error {
 	return nil
 }
 
-// downloadContent handles the download of content, used for getting mpd files
-func (a *API) downloadContent(ctx *fiber.Ctx) error {
+// getContent handles the download of content, used for getting mpd files
+func (a *API) getContent(ctx *fiber.Ctx) error {
 	return nil
 }
 
