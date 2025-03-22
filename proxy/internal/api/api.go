@@ -1,15 +1,20 @@
 package api
 
 import (
+	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 // API struct holds endpoint functions of the proxy server
 type API struct {
-	Logr *zap.Logger
+	Logr    *zap.Logger
+	Metrics *metrics.Metrics
+	Tracer  trace.Tracer
 }
 
 // Register method takes a fiber.App instance and defines all the endpoints
