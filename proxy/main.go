@@ -6,6 +6,7 @@ import (
 	"github.com/amirhnajafiz/telescope/internal/api"
 	"github.com/amirhnajafiz/telescope/internal/config"
 	"github.com/amirhnajafiz/telescope/internal/logr"
+	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
 
 	"github.com/gofiber/fiber/v2"
@@ -36,13 +37,22 @@ func main() {
 		panic(err)
 	}
 
+	// create new metrics struct
+	metricsInstance := metrics.NewMetrics()
+
+	// check if metrics port is set
+	if cfg.MetricsPort != 0 {
+		metrics.NewServer(cfg.MetricsPort)
+	}
+
 	// create a new fiber app
 	app := fiber.New()
 
 	// create a new API instance
 	apiInstance := api.API{
-		Logr:   logger.Named("api"),
-		Tracer: tr,
+		Logr:    logger.Named("api"),
+		Metrics: metricsInstance,
+		Tracer:  tr,
 	}
 
 	// register the API endpoints
