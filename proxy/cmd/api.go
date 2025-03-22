@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/amirhnajafiz/telescope/internal/api"
 	"github.com/amirhnajafiz/telescope/internal/config"
 	"github.com/amirhnajafiz/telescope/internal/logr"
@@ -15,7 +17,7 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	// create a new logger instance
 	logger, err := logr.NewZapLogger(cfg.Debug)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create logger: %w", err)
 	}
 
 	// create a new otel tracer
@@ -26,7 +28,7 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		tr, err = tracing.NewDevelopmentTracer()
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create tracer: %w", err)
 	}
 
 	// create new metrics struct

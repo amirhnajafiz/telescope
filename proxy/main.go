@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/amirhnajafiz/telescope/cmd"
 	"github.com/amirhnajafiz/telescope/internal/config"
@@ -13,7 +14,7 @@ func main() {
 	// load configs
 	cfg, err := config.LoadConfigs()
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	// create a new fiber app
@@ -22,7 +23,7 @@ func main() {
 	// create a new API instance
 	apiInstance, err := cmd.RegisterAPI(cfg)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	// register the API endpoints
@@ -30,6 +31,6 @@ func main() {
 
 	// start the server on a specified port
 	if err := app.Listen(fmt.Sprintf(":%d", cfg.Port)); err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 }
