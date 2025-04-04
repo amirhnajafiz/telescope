@@ -37,3 +37,23 @@ Proxy->>IPFS: cat bafy123 (range 0-999999)
 IPFS-->>Proxy: Returns segment data
 Proxy-->>Client: Serves video segment
 ```
+
+## Metrics
+
+Telescope uses several key metrics to make smart decisions about video quality. These help it choose the best bitrate for smooth and efficient streaming.
+
+Here’s what it takes into account:
+
+- **RTT (Round-Trip Time):**  
+  Telescope measures the time it takes to send a request to an IPFS node and get a response. This is done for every segment request.
+
+- **Bandwidth Estimation:**  
+  Bandwidth is calculated based on the size of the video segment and the RTT. This helps estimate how fast the network is at any moment.
+
+- **Segment Count:**  
+  The number of segments requested and delivered is also tracked to help make more accurate streaming decisions.
+
+- **Caching Status:**  
+  Telescope checks if the requested file is already cached. If it is, it can deliver it much faster, which improves performance.
+
+By using these metrics, Telescope adapts the video quality in real-time to match current network conditions, giving users a smoother viewing experience.
