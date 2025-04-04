@@ -38,6 +38,14 @@ IPFS-->>Proxy: Returns segment data
 Proxy-->>Client: Serves video segment
 ```
 
+### Usage Diagram
+
+![](.github/assets/diagram.svg)
+
+### Sequence Diagram
+
+![](.github/assets/sequence.svg)
+
 ## Metrics
 
 Telescope uses several key metrics to make smart decisions about video quality. These help it choose the best bitrate for smooth and efficient streaming.
