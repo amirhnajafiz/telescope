@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/amirhnajafiz/telescope/internal/abr"
 	"github.com/amirhnajafiz/telescope/internal/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 
@@ -17,6 +18,7 @@ type API struct {
 	Metrics *metrics.Metrics
 	Tracer  trace.Tracer
 	IPFS    ipfs.Client
+	ABR     abr.ABRPolicy
 }
 
 // Register method takes a fiber.App instance and defines all the endpoints

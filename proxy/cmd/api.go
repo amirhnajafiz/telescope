@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/amirhnajafiz/telescope/internal/abr"
 	"github.com/amirhnajafiz/telescope/internal/api"
 	"github.com/amirhnajafiz/telescope/internal/config"
 	"github.com/amirhnajafiz/telescope/internal/ipfs"
@@ -45,11 +46,14 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		BaseURL: cfg.IPFSGateway,
 	}
 
+	abrPolicy := &abr.PassthroughPolicy{}
+
 	// create a new API instance
 	return &api.API{
 		Logr:    logger.Named("api"),
 		Metrics: metricsInstance,
 		Tracer:  tr,
 		IPFS:    ipfsClient,
+		ABR:     abrPolicy,
 	}, nil
 }

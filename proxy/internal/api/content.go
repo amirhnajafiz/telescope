@@ -9,7 +9,27 @@ func (a *API) newContent(ctx *fiber.Ctx) error {
 
 // getContent handles the download of content, used for getting mpd files
 func (a *API) getContent(ctx *fiber.Ctx) error {
-	return nil
+	cid := ctx.Params("cid")
+	clientID := ctx.Get("X-Client-ID", "default")
+
+	// Fetch original MPD file from IPFS
+	originalMPD, err := a.IPFS.FetchMPD(cid)
+	if err != nil {
+		a.Metrics.ErrorCount.WithLabelValues("GET", "manifest").Inc()
+		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
+	}
+
+	// Rewrite MPD via ABR policy
+	rewritten, err := a.ABR.RewriteMPD(originalMPD, clientID)
+	if err != nil {
+		a.Metrics.ErrorCount.WithLabelValues("GET", "rewrite").Inc()
+		return ctx.Status(fiber.StatusInternalServerError).SendString("failed to rewrite manifest")
+	}
+
+	a.Metrics.BytesTransferred.WithLabelValues("GET", "manifest").Add(float64(len(rewritten)))
+
+	ctx.Type("application/dash+xml")
+	return ctx.Send(rewritten)
 }
 
 // listContents handles the listing of all contents
