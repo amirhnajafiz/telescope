@@ -12,16 +12,14 @@ type CacheBasedPolicy struct {
 }
 
 func (p *CacheBasedPolicy) RewriteMPD(original []byte, clientID string) ([]byte, error) {
-	// Parse original MPD XML
 	tree := new(mpd.MPD)
 	if err := tree.Decode(original); err != nil {
 		return nil, err
 	}
 
-	Tc := p.Estimator.GetUncached(clientID)
+	Tc := p.Estimator.GetCurBW(clientID)
 	Tg := p.Estimator.GetCached(clientID)
-
-	adjustment := Tc - Tg
+	Tn := p.Estimator.GetUncached(clientID)
 
 	for _, period := range tree.Period {
 		for _, adapt := range period.AdaptationSets {
@@ -29,14 +27,20 @@ func (p *CacheBasedPolicy) RewriteMPD(original []byte, clientID string) ([]byte,
 				rep := &adapt.Representations[i]
 				bw := float64(*rep.Bandwidth)
 
-				// Apply adjustment
-				newBw := bw
-				if adjustment > 0 {
-					newBw = bw + adjustment // penalize uncached
+				// Build a unique CID for each segment+quality (fake placeholder)
+				// TODO parse segment base names from SegmentTemplate.Media or
+				// track per-segment request progress (like Telescope originally did with LatestProgress per client)
+				cid := *rep.ID
+
+				var adjustment float64
+
+				if p.Cache.IsCached(cid) {
+					adjustment = Tc - Tg
 				} else {
-					newBw = bw + adjustment // reward cached
+					adjustment = Tc - Tn
 				}
 
+				newBw := bw + adjustment
 				if newBw < 1 {
 					newBw = 1
 				}
@@ -47,6 +51,5 @@ func (p *CacheBasedPolicy) RewriteMPD(original []byte, clientID string) ([]byte,
 		}
 	}
 
-	// Encode modified MPD back to bytes
 	return tree.Encode()
 }

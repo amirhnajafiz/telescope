@@ -6,9 +6,9 @@ import (
 )
 
 type ClientEstimate struct {
-	Uncached float64
-	Cached   float64
-	CurBW    float64
+	Uncached float64 // Tn
+	Cached   float64 // Tg
+	CurBW    float64 // Tc
 	Alpha    float64 // smoothing factor
 }
 
@@ -63,6 +63,17 @@ func (e *Estimator) GetBandwidth(clientID string) float64 {
 	return 0.0
 }
 
+// Get cached throughput Tc
+func (e *Estimator) GetCurBW(clientID string) float64 {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	if est, ok := e.clients[clientID]; ok {
+		return est.CurBW
+	}
+	return 0
+}
+
 // Get cached throughput Tg
 // How fast the gateway delivers segments
 func (e *Estimator) GetUncached(clientID string) float64 {
@@ -74,7 +85,7 @@ func (e *Estimator) GetUncached(clientID string) float64 {
 	return 0
 }
 
-// Get uncached throughput Tc
+// Get uncached throughput Tn
 // How fast IPFS providers deliver segments
 func (e *Estimator) GetCached(clientID string) float64 {
 	e.mu.RLock()
