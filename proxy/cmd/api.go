@@ -11,6 +11,7 @@ import (
 	"github.com/amirhnajafiz/telescope/internal/logr"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
+	"github.com/amirhnajafiz/telescope/internal/throughput"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -51,13 +52,16 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 
 	segmentCache := cache.NewCache()
 
+	estimator := throughput.NewEstimator()
+
 	// create a new API instance
 	return &api.API{
-		Logr:    logger.Named("api"),
-		Metrics: metricsInstance,
-		Tracer:  tr,
-		IPFS:    ipfsClient,
-		ABR:     abrPolicy,
-		Cache:   segmentCache,
+		Logr:      logger.Named("api"),
+		Metrics:   metricsInstance,
+		Tracer:    tr,
+		IPFS:      ipfsClient,
+		ABR:       abrPolicy,
+		Cache:     segmentCache,
+		Estimator: estimator,
 	}, nil
 }

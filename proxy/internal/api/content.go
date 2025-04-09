@@ -1,6 +1,10 @@
 package api
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+)
 
 // newContent handles the upload of content, used for uploading
 func (a *API) newContent(ctx *fiber.Ctx) error {
@@ -47,11 +51,18 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 		a.Metrics.CacheMisses.Inc()
 	}
 
+	start := time.Now()
+
 	segment, err := a.IPFS.FetchSegment(cid)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "stream").Inc()
 		return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
 	}
+
+	duration := time.Since(start)
+	clientID := ctx.Get("X-Client-ID", "default")
+	cached := a.Cache.IsCached(cid)
+	a.Estimator.RecordDownload(clientID, len(segment), duration, cached)
 
 	a.Cache.MarkCached(cid)
 
