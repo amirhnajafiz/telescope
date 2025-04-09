@@ -20,7 +20,7 @@
 
 <script>
   const clientID = Math.random().toString(36).substring(2, 8);
-  const mpdUrl = `/videos/BigBuckBunny_6s_onDemand_2014_05_09.mpd`;
+  const mpdUrl = `/videos/bunny.mpd`;
 
   const player = dashjs.MediaPlayer().create();
   player.initialize(document.querySelector("#videoPlayer"), mpdUrl, true);
