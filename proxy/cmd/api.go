@@ -63,7 +63,7 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		Metrics:   metricsInstance,
 		Tracer:    tr,
 		IPFS:      ipfsClient,
-		ABR:       abrPolicy,
+		ABR:       *abrPolicy,
 		Cache:     segmentCache,
 		Estimator: estimator,
 	}, nil
