@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/amirhnajafiz/telescope/internal/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,6 +16,7 @@ type API struct {
 	Logr    *zap.Logger
 	Metrics *metrics.Metrics
 	Tracer  trace.Tracer
+	IPFS    ipfs.Client
 }
 
 // Register method takes a fiber.App instance and defines all the endpoints

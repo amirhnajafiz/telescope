@@ -19,5 +19,14 @@ func (a *API) listContents(ctx *fiber.Ctx) error {
 
 // streamContent handles the streaming of content over DASH
 func (a *API) streamContent(ctx *fiber.Ctx) error {
-	return nil
+	cid := ctx.Params("cid")
+
+	segment, err := a.IPFS.FetchSegment(cid)
+	if err != nil {
+		a.Metrics.ErrorCount.WithLabelValues("GET", "stream").Inc()
+		return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
+	}
+
+	a.Metrics.BytesTransferred.WithLabelValues("GET", "stream").Add(float64(len(segment)))
+	return ctx.Send(segment)
 }

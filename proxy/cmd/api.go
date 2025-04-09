@@ -5,6 +5,7 @@ import (
 
 	"github.com/amirhnajafiz/telescope/internal/api"
 	"github.com/amirhnajafiz/telescope/internal/config"
+	"github.com/amirhnajafiz/telescope/internal/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/logr"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
@@ -39,10 +40,16 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		metrics.NewServer(cfg.MetricsPort)
 	}
 
+	// create a new IPFS client instance
+	ipfsClient := &ipfs.GatewayClient{
+		BaseURL: cfg.IPFSGateway,
+	}
+
 	// create a new API instance
 	return &api.API{
 		Logr:    logger.Named("api"),
 		Metrics: metricsInstance,
 		Tracer:  tr,
+		IPFS:    ipfsClient,
 	}, nil
 }
