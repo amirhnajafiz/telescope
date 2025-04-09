@@ -5,6 +5,7 @@ import (
 
 	"github.com/amirhnajafiz/telescope/internal/abr"
 	"github.com/amirhnajafiz/telescope/internal/api"
+	"github.com/amirhnajafiz/telescope/internal/cache"
 	"github.com/amirhnajafiz/telescope/internal/config"
 	"github.com/amirhnajafiz/telescope/internal/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/logr"
@@ -48,6 +49,8 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 
 	abrPolicy := &abr.PassthroughPolicy{}
 
+	segmentCache := cache.NewCache()
+
 	// create a new API instance
 	return &api.API{
 		Logr:    logger.Named("api"),
@@ -55,5 +58,6 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		Tracer:  tr,
 		IPFS:    ipfsClient,
 		ABR:     abrPolicy,
+		Cache:   segmentCache,
 	}, nil
 }

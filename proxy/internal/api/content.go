@@ -41,11 +41,19 @@ func (a *API) listContents(ctx *fiber.Ctx) error {
 func (a *API) streamContent(ctx *fiber.Ctx) error {
 	cid := ctx.Params("cid")
 
+	if a.Cache.IsCached(cid) {
+		a.Metrics.CacheHits.Inc()
+	} else {
+		a.Metrics.CacheMisses.Inc()
+	}
+
 	segment, err := a.IPFS.FetchSegment(cid)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "stream").Inc()
 		return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
 	}
+
+	a.Cache.MarkCached(cid)
 
 	a.Metrics.BytesTransferred.WithLabelValues("GET", "stream").Add(float64(len(segment)))
 	return ctx.Send(segment)
