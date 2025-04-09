@@ -20,7 +20,7 @@ type API struct {
 	Metrics   *metrics.Metrics
 	Tracer    trace.Tracer
 	IPFS      ipfs.Client
-	ABR       abr.ABRPolicy
+	ABR       abr.CacheBasedPolicy
 	Cache     *cache.SegmentCache
 	Estimator *throughput.Estimator
 }

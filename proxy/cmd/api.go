@@ -48,11 +48,14 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		BaseURL: cfg.IPFSGateway,
 	}
 
-	abrPolicy := &abr.PassthroughPolicy{}
+	estimator := throughput.NewEstimator()
 
 	segmentCache := cache.NewCache()
 
-	estimator := throughput.NewEstimator()
+	abrPolicy := &abr.CacheBasedPolicy{
+		Estimator: estimator,
+		Cache:     segmentCache,
+	}
 
 	// create a new API instance
 	return &api.API{
