@@ -62,3 +62,25 @@ func (e *Estimator) GetBandwidth(clientID string) float64 {
 	}
 	return 0.0
 }
+
+// Get cached throughput Tg
+// How fast the gateway delivers segments
+func (e *Estimator) GetUncached(clientID string) float64 {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	if est, ok := e.clients[clientID]; ok {
+		return est.Uncached
+	}
+	return 0
+}
+
+// Get uncached throughput Tc
+// How fast IPFS providers deliver segments
+func (e *Estimator) GetCached(clientID string) float64 {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	if est, ok := e.clients[clientID]; ok {
+		return est.Cached
+	}
+	return 0
+}
