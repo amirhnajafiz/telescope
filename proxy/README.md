@@ -19,6 +19,7 @@ The original Telescope proxy is available at [Telescope Repository](https://gith
 + Created a DASH.js-based test client to simulate real adaptive streaming from the browser
 + Set up static routing for MPD + segment files under `/videos`, and served the player UI from `/`
 + Validated successful dynamic MPD rewriting and client-aware segment quality adaptation
++ Validated successful cache hits and misses using content simulation
 
 ---
 
