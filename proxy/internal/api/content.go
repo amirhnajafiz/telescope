@@ -47,8 +47,18 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 
 	if a.Cache.IsCached(cid) {
 		a.Metrics.CacheHits.Inc()
+		a.CacheHitCount.Add(1)
 	} else {
 		a.Metrics.CacheMisses.Inc()
+		a.CacheMissCount.Add(1)
+	}
+	a.Cache.MarkCached(cid)
+
+	// calculate cache ratio from local counters
+	total := float64(a.CacheHitCount.Load() + a.CacheMissCount.Load())
+	if total > 0 {
+		ratio := float64(a.CacheHitCount.Load()) / total
+		a.Metrics.CacheRatio.Set(ratio)
 	}
 
 	start := time.Now()
@@ -63,8 +73,6 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	clientID := ctx.Get("X-Client-ID", "default")
 	cached := a.Cache.IsCached(cid)
 	a.Estimator.RecordDownload(clientID, len(segment), duration, cached)
-
-	a.Cache.MarkCached(cid)
 
 	a.Metrics.BytesTransferred.WithLabelValues("GET", "stream").Add(float64(len(segment)))
 	return ctx.Send(segment)
