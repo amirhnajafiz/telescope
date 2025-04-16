@@ -16,14 +16,14 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	cid := ctx.Params("cid")
 	clientID := ctx.Get("X-Client-ID", "default")
 
-	// Fetch original MPD file from IPFS
-	originalMPD, err := a.IPFS.FetchMPD(cid)
+	// fetch original MPD file from IPFS
+	originalMPD, err := a.IPFS.Get(cid)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "manifest").Inc()
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
 
-	// Rewrite MPD via ABR policy
+	// rewrite MPD via ABR policy
 	rewritten, err := a.ABR.RewriteMPD(originalMPD, clientID)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "rewrite").Inc()
@@ -63,7 +63,7 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 
 	start := time.Now()
 
-	segment, err := a.IPFS.FetchSegment(cid)
+	segment, err := a.IPFS.Get(cid)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "stream").Inc()
 		return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")

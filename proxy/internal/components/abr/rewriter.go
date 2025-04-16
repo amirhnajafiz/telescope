@@ -18,9 +18,9 @@ func (p *CacheBasedPolicy) RewriteMPD(original []byte, clientID string) ([]byte,
 		return nil, err
 	}
 
-	Tc := p.Estimator.GetCurBW(clientID)
-	Tg := p.Estimator.GetCached(clientID)
-	Tn := p.Estimator.GetUncached(clientID)
+	// Tc := p.Estimator.GetCurBW(clientID)
+	// Tg := p.Estimator.GetCached(clientID)
+	// Tn := p.Estimator.GetUncached(clientID)
 
 	for _, period := range tree.Period {
 		for _, adapt := range period.AdaptationSets {
@@ -31,15 +31,15 @@ func (p *CacheBasedPolicy) RewriteMPD(original []byte, clientID string) ([]byte,
 				// Build a unique CID for each segment+quality (fake placeholder)
 				// TODO parse segment base names from SegmentTemplate.Media or
 				// track per-segment request progress (like Telescope originally did with LatestProgress per client)
-				cid := *rep.ID
+				//cid := *rep.ID
 
 				var adjustment float64
 
-				if p.Cache.IsCached(cid) {
-					adjustment = Tc - Tg
-				} else {
-					adjustment = Tc - Tn
-				}
+				// if p.Cache.IsCached(cid) {
+				// 	adjustment = Tc - Tg
+				// } else {
+				// 	adjustment = Tc - Tn
+				// }
 
 				newBw := bw + adjustment
 				if newBw < 1 {

@@ -23,8 +23,8 @@ func TestRewriteMPD(t *testing.T) {
 	</Period>
 </MPD>`
 
-	cache := cache.NewCache()
-	cache.MarkCached("480p")
+	cache := cache.NewCache("")
+	// cache.MarkCached("480p")
 
 	estimator := throughput.NewEstimator()
 	client := "client1"
