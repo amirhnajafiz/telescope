@@ -3,15 +3,15 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/amirhnajafiz/telescope/internal/abr"
 	"github.com/amirhnajafiz/telescope/internal/api"
+	"github.com/amirhnajafiz/telescope/internal/components/abr"
+	"github.com/amirhnajafiz/telescope/internal/components/throughput"
 	"github.com/amirhnajafiz/telescope/internal/config"
 	"github.com/amirhnajafiz/telescope/internal/logr"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
 	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
-	"github.com/amirhnajafiz/telescope/internal/throughput"
 
 	"go.opentelemetry.io/otel/trace"
 )

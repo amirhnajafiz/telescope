@@ -3,11 +3,11 @@ package api
 import (
 	"sync/atomic"
 
-	"github.com/amirhnajafiz/telescope/internal/abr"
+	"github.com/amirhnajafiz/telescope/internal/components/abr"
+	"github.com/amirhnajafiz/telescope/internal/components/throughput"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
 	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
-	"github.com/amirhnajafiz/telescope/internal/throughput"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"

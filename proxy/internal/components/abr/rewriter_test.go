@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/amirhnajafiz/telescope/internal/components/throughput"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
-	"github.com/amirhnajafiz/telescope/internal/throughput"
 )
 
 func TestRewriteMPD(t *testing.T) {

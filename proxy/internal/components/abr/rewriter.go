@@ -1,8 +1,9 @@
 package abr
 
 import (
+	"github.com/amirhnajafiz/telescope/internal/components/throughput"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
-	"github.com/amirhnajafiz/telescope/internal/throughput"
+
 	"github.com/hare1039/go-mpd"
 )
 
