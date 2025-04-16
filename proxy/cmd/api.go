@@ -44,13 +44,11 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	}
 
 	// create a new IPFS client instance
-	ipfsClient := &ipfs.GatewayClient{
-		BaseURL: cfg.IPFSGateway,
-	}
+	ipfsClient := ipfs.NewClient(cfg.IPFSGateway)
 
 	estimator := throughput.NewEstimator()
 
-	segmentCache := cache.NewCache()
+	segmentCache := cache.NewCache("")
 
 	abrPolicy := &abr.CacheBasedPolicy{
 		Estimator: estimator,
