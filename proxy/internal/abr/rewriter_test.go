@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amirhnajafiz/telescope/internal/cache"
+	"github.com/amirhnajafiz/telescope/internal/storage/cache"
 	"github.com/amirhnajafiz/telescope/internal/throughput"
 )
 

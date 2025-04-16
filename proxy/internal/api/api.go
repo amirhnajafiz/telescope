@@ -4,8 +4,8 @@ import (
 	"sync/atomic"
 
 	"github.com/amirhnajafiz/telescope/internal/abr"
-	"github.com/amirhnajafiz/telescope/internal/cache"
-	"github.com/amirhnajafiz/telescope/internal/ipfs"
+	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/throughput"
 

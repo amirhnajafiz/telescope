@@ -5,10 +5,10 @@ import (
 
 	"github.com/amirhnajafiz/telescope/internal/abr"
 	"github.com/amirhnajafiz/telescope/internal/api"
-	"github.com/amirhnajafiz/telescope/internal/cache"
 	"github.com/amirhnajafiz/telescope/internal/config"
-	"github.com/amirhnajafiz/telescope/internal/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/logr"
+	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
 	"github.com/amirhnajafiz/telescope/internal/throughput"
