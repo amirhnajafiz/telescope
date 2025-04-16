@@ -1,28 +1,28 @@
 package cache
 
-// SegmentCache holds a thread-safe in-memory record of cached segment CIDs.
-type SegmentCache struct {
-	data map[string]bool
+// Cache is an interface for our cache system to store segment records by CID
+type Cache struct {
+	baseDir string
 }
 
 // NewCache creates a new cache instance
-func NewCache() *SegmentCache {
-	return &SegmentCache{
-		data: make(map[string]bool),
+func NewCache(bd string) *Cache {
+	return &Cache{
+		baseDir: bd,
 	}
 }
 
 // IsCached returns true if the given CID is already cached.
-func (c *SegmentCache) IsCached(cid string) bool {
+func (c *Cache) IsCached(cid string) bool {
 	return c.data[cid]
 }
 
 // MarkCached marks a CID as cached.
-func (c *SegmentCache) MarkCached(cid string) {
+func (c *Cache) MarkCached(cid string) {
 	c.data[cid] = true
 }
 
 // Size returns the number of currently cached items.
-func (c *SegmentCache) Size() int {
+func (c *Cache) Size() int {
 	return len(c.data)
 }
