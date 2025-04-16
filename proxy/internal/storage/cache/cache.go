@@ -1,5 +1,7 @@
 package cache
 
+import "fmt"
+
 // Cache is an interface for our cache system to store segment records by CID
 type Cache struct {
 	baseDir string
@@ -12,17 +14,22 @@ func NewCache(bd string) *Cache {
 	}
 }
 
-// IsCached returns true if the given CID is already cached.
-func (c *Cache) IsCached(cid string) bool {
-	return c.data[cid]
+// Store stores the data in the cache under the given CID
+func (c *Cache) Store(cid string, data []byte) error {
+	return writeToFile(fmt.Sprintf("%s/%s", c.baseDir, cid), data)
 }
 
-// MarkCached marks a CID as cached.
-func (c *Cache) MarkCached(cid string) {
-	c.data[cid] = true
+// Retrieve retrieves the data from the cache, if it does not exist, it returns an error
+func (c *Cache) Retrieve(cid string) ([]byte, error) {
+	path := fmt.Sprintf("%s/%s", c.baseDir, cid)
+	if !isFileExists(path) {
+		return nil, fmt.Errorf("file %s does not exist", cid)
+	}
+
+	return readFromFile(path)
 }
 
-// Size returns the number of currently cached items.
-func (c *Cache) Size() int {
-	return len(c.data)
+// Size returns the number of files in the cache directory
+func (c *Cache) Size() (int, error) {
+	return countFilesInDir(c.baseDir)
 }
