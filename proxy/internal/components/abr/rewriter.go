@@ -9,7 +9,7 @@ import (
 
 type CacheBasedPolicy struct {
 	Estimator *throughput.Estimator
-	Cache     *cache.SegmentCache
+	Cache     *cache.Cache
 }
 
 func (p *CacheBasedPolicy) RewriteMPD(original []byte, clientID string) ([]byte, error) {

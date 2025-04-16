@@ -45,21 +45,21 @@ func (a *API) listContents(ctx *fiber.Ctx) error {
 func (a *API) streamContent(ctx *fiber.Ctx) error {
 	cid := ctx.Params("cid")
 
-	if a.Cache.IsCached(cid) {
-		a.Metrics.CacheHits.Inc()
-		a.CacheHitCount.Add(1)
-	} else {
-		a.Metrics.CacheMisses.Inc()
-		a.CacheMissCount.Add(1)
-	}
-	a.Cache.MarkCached(cid)
+	// TODO: update this to use the cache system
+	// if a.Cache.IsCached(cid) {
+	// 	a.Metrics.CacheHits.Inc()
+	// } else {
+	// 	a.Metrics.CacheMisses.Inc()
+	// }
+	// a.Cache.MarkCached(cid)
 
 	// calculate cache ratio from local counters
-	total := float64(a.CacheHitCount.Load() + a.CacheMissCount.Load())
-	if total > 0 {
-		ratio := float64(a.CacheHitCount.Load()) / total
-		a.Metrics.CacheRatio.Set(ratio)
-	}
+	// TODO: update this to use the cache system
+	// total := float64(a.CacheHitCount.Load() + a.CacheMissCount.Load())
+	// if total > 0 {
+	// 	ratio := float64(a.CacheHitCount.Load()) / total
+	// 	a.Metrics.CacheRatio.Set(ratio)
+	// }
 
 	start := time.Now()
 
@@ -71,8 +71,8 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 
 	duration := time.Since(start)
 	clientID := ctx.Get("X-Client-ID", "default")
-	cached := a.Cache.IsCached(cid)
-	a.Estimator.RecordDownload(clientID, len(segment), duration, cached)
+	// cached := a.Cache.IsCached(cid) // TODO: update this to use the cache system
+	a.Estimator.RecordDownload(clientID, len(segment), duration, true)
 
 	a.Metrics.BytesTransferred.WithLabelValues("GET", "stream").Add(float64(len(segment)))
 	return ctx.Send(segment)
