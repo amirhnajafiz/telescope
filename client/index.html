@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Telescope Player</title>
+  <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2em;
+    }
+
+    video {
+      width: 80%;
+      border: 2px solid #222;
+      border-radius: 8px;
+    }
+
+    #log {
+      font-size: 14px;
+      color: #444;
+      margin-top: 1em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>🚀 🌕 🔭 Telescope DASH Client</h2>
+
+  <video id="videoPlayer" muted controls autoplay></video>
+
+  <div id="log">Loading...</div>
+
+  <script>
+    const clientID = Math.random().toString(36).substring(2, 8);
+    const mpdUrl = `/videos/bunny.mpd`;
+
+    const player = dashjs.MediaPlayer().create();
+    const video = document.querySelector("#videoPlayer")
+    player.initialize(video, mpdUrl, true);
+    video.play();
+
+    player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
+      document.getElementById('log').innerText = `Client ID: ${clientID}`;
+    });
+
+    player.on(dashjs.MediaPlayer.events.FRAGMENT_LOADING_STARTED, function (e) {
+      console.log("Loading segment:", e.request.url);
+    });
+
+    player.on(dashjs.MediaPlayer.events.MANIFEST_LOADED, function (e) {
+      console.log("📜 Manifest event object:", e);
+    });
+
+    player.on(dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED, function (e) {
+      console.log(`🎚️ Quality changed: type=${e.mediaType}, new index=${e.newQuality}`);
+    });
+
+    player.on(dashjs.MediaPlayer.events.BUFFER_LEVEL_UPDATED, (e) => {
+      console.log(`📊 Buffer level: ${e.bufferLevel.toFixed(2)}s`);
+    });
+
+    // Attach client ID to all outgoing requests
+    player.extend("RequestModifier", () => ({
+      modifyRequestHeader: function (xhr) {
+        xhr.setRequestHeader("X-Client-ID", clientID);
+        return xhr;
+      }
+    }), true);
+  </script>
+
+</body>
+
+</html>

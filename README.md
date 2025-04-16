@@ -1,42 +1,47 @@
 # Telescope
 
-**Telescope** is a proxy service that works like a smart adaptive bitrate (ABR) system for the InterPlanetary File System (IPFS). It helps manage and improve how content is delivered from IPFS by adjusting the quality based on network conditions.
+**Telescope** is a smart adaptive bitrate (ABR) proxy system for streaming content over the InterPlanetary File System (IPFS). It dynamically adjusts video quality based on network conditions and cache awareness, improving the efficiency and experience of decentralized video delivery.
 
-This project is a rebuilt version of the original Telescope, which was cloned from [github.com/SBUNetSys/Telescope](https://github.com/SBUNetSys/Telescope). Our version includes several improvements:
+This project is a **rebuilt version** of the original [Telescope proxy](https://github.com/SBUNetSys/Telescope), redesigned from scratch with a clean architecture, modern observability tools, and improved ABR logic based on formal analysis.
 
-- Cleaner and more efficient source code, written in **Golang**  
-- A better **monitoring system** to track performance and activity  
-- An improved **caching system** to make content delivery faster and more reliable  
+---
 
-Telescope is designed to make IPFS-based streaming and content delivery smarter, smoother, and more responsive to different network speeds.
+##  What’s New in This Version?
 
-## How Video Streaming Works with Telescope?
+- ✅ Modular and idiomatic **Golang project structure** (`cmd/`, `internal/`)
+- ✅ Rewritten **throughput estimation engine** using exponential smoothing for cached and uncached segments
+- ✅ Paper-aligned **ABR logic** using accurate bandwidth deltas (`Tc - Tn`, `Tc - Tg`) to rewrite DASH MPDs dynamically
+- ✅ Real-time **Prometheus metrics** and **OpenTelemetry tracing**
+- ✅ Full-featured **DASH.js browser client** to test streaming behavior and adaptation live
+- ✅ In-memory segment **cache tracking system**
+- ✅ Fully tested core modules with unit tests for ABR, cache, and estimator
 
-Telescope acts as a middle layer between the video player and the IPFS network. It takes requests from the player, fetches video segments from IPFS, and decides which video quality to serve based on the current network speed (just like adaptive bitrate streaming).
+---
 
-The process looks like this:
+## How Video Streaming Works with Telescope
 
-1. **The user plays a video** in their browser or media player.
-2. **The player sends a request** for video segments to Telescope.
-3. **Telescope checks the network conditions** and chooses the best quality (bitrate) for smooth playback.
-4. **It fetches the correct segment** from IPFS.
-5. **The segment is sent back** to the player for viewing.
-6. This cycle repeats for each segment of the video, adjusting the quality if the network speed changes.
+Telescope acts as a smart proxy between a DASH video player and IPFS. It receives video segment requests, estimates network conditions and caching status, and rewrites the video manifest (MPD) in real-time to guide quality selection.
 
-This approach ensures a better viewing experience with less buffering and faster loading times, even when the network is unstable.
+The flow:
+
+1. A user opens a video player (DASH.js) in their browser.
+2. The player requests the `.mpd` manifest from Telescope.
+3. Telescope dynamically rewrites the MPD based on current client throughput and cache status.
+4. As the player requests segments, Telescope fetches them from IPFS (or a stub in test mode), tracks bandwidth, and updates throughput estimation.
+5. The next manifest request reflects this updated bandwidth info, helping DASH.js adapt quality accordingly.
 
 ```
-Client->>Proxy: GET /dash/bafy123
-Proxy->>IPFS: Fetch metadata from bafy123
-IPFS-->>Proxy: Returns video metadata
-Proxy->>Proxy: Generate MPD with embedded CID
-Proxy-->>Client: Returns DASH manifest
+Client->>Proxy: GET /videos/bunny.mpd
+Proxy->>IPFS: Fetch segment CID list
+Proxy->>Proxy: Rewrites MPD based on Tc, Tg, Tn
+Proxy-->>Client: Returns adaptive MPD
 
-Client->>Proxy: GET /segment/bafy123/0-999999
-Proxy->>IPFS: cat bafy123 (range 0-999999)
-IPFS-->>Proxy: Returns segment data
-Proxy-->>Client: Serves video segment
+Client->>Proxy: GET /videos/bunny_128256bps/seg1.m4s
+Proxy->>IPFS: Fetch segment or serve cached
+Proxy-->>Client: Stream segment
 ```
+
+---
 
 ### Usage Diagram
 
@@ -46,22 +51,38 @@ Proxy-->>Client: Serves video segment
 
 ![](.github/assets/sequence.svg)
 
-## Metrics
+---
 
-Telescope uses several key metrics to make smart decisions about video quality. These help it choose the best bitrate for smooth and efficient streaming.
+## Metrics and Observability
 
-Here’s what it takes into account:
+Telescope exposes real-time metrics and traces to support debugging, monitoring, and performance tuning.
 
-- **RTT (Round-Trip Time):**  
-  Telescope measures the time it takes to send a request to an IPFS node and get a response. This is done for every segment request.
+### Key Metrics
 
-- **Bandwidth Estimation:**  
-  Bandwidth is calculated based on the size of the video segment and the RTT. This helps estimate how fast the network is at any moment.
+- **RTT (Round-Trip Time)** – segment fetch latency
+- **Bandwidth Estimation** – based on segment size and transfer time
+- **Throughput Tracking** – smoothed client `Tc`, cached `Tg`, uncached `Tn`
+- **Cache Awareness** – per-segment cache hit/miss ratio
+- **Active Connections** – current number of live users
+- **Segment Quality History** – logs how quality levels shift over time
 
-- **Segment Count:**  
-  The number of segments requested and delivered is also tracked to help make more accurate streaming decisions.
+### Observability Tools
 
-- **Caching Status:**  
-  Telescope checks if the requested file is already cached. If it is, it can deliver it much faster, which improves performance.
+- **Prometheus**: exports metrics via `/metrics`
+- **Jaeger/OTel**: full support for distributed tracing via OpenTelemetry
 
-By using these metrics, Telescope adapts the video quality in real-time to match current network conditions, giving users a smoother viewing experience.
+---
+
+## Project Structure
+
+```
+telescope/
+├── cmd/               → API registerer-AKA Serviec Injector (api.go)
+├── internal/          → core modules (api, cache, abr, throughput, telemetry)
+├── client/            → DASH.js HTML test client
+├── assets/            → .mpd + .m4s video files (for local testing)
+├── scripts/           → utils (downloaders, etc.)
+```
+
+---
+

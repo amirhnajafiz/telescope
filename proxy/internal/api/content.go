@@ -1,6 +1,10 @@
 package api
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+)
 
 // newContent handles the upload of content, used for uploading
 func (a *API) newContent(ctx *fiber.Ctx) error {
@@ -9,7 +13,27 @@ func (a *API) newContent(ctx *fiber.Ctx) error {
 
 // getContent handles the download of content, used for getting mpd files
 func (a *API) getContent(ctx *fiber.Ctx) error {
-	return nil
+	cid := ctx.Params("cid")
+	clientID := ctx.Get("X-Client-ID", "default")
+
+	// Fetch original MPD file from IPFS
+	originalMPD, err := a.IPFS.FetchMPD(cid)
+	if err != nil {
+		a.Metrics.ErrorCount.WithLabelValues("GET", "manifest").Inc()
+		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
+	}
+
+	// Rewrite MPD via ABR policy
+	rewritten, err := a.ABR.RewriteMPD(originalMPD, clientID)
+	if err != nil {
+		a.Metrics.ErrorCount.WithLabelValues("GET", "rewrite").Inc()
+		return ctx.Status(fiber.StatusInternalServerError).SendString("failed to rewrite manifest")
+	}
+
+	a.Metrics.BytesTransferred.WithLabelValues("GET", "manifest").Add(float64(len(rewritten)))
+
+	ctx.Type("application/dash+xml")
+	return ctx.Send(rewritten)
 }
 
 // listContents handles the listing of all contents
@@ -19,5 +43,37 @@ func (a *API) listContents(ctx *fiber.Ctx) error {
 
 // streamContent handles the streaming of content over DASH
 func (a *API) streamContent(ctx *fiber.Ctx) error {
-	return nil
+	cid := ctx.Params("cid")
+
+	if a.Cache.IsCached(cid) {
+		a.Metrics.CacheHits.Inc()
+		a.CacheHitCount.Add(1)
+	} else {
+		a.Metrics.CacheMisses.Inc()
+		a.CacheMissCount.Add(1)
+	}
+	a.Cache.MarkCached(cid)
+
+	// calculate cache ratio from local counters
+	total := float64(a.CacheHitCount.Load() + a.CacheMissCount.Load())
+	if total > 0 {
+		ratio := float64(a.CacheHitCount.Load()) / total
+		a.Metrics.CacheRatio.Set(ratio)
+	}
+
+	start := time.Now()
+
+	segment, err := a.IPFS.FetchSegment(cid)
+	if err != nil {
+		a.Metrics.ErrorCount.WithLabelValues("GET", "stream").Inc()
+		return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
+	}
+
+	duration := time.Since(start)
+	clientID := ctx.Get("X-Client-ID", "default")
+	cached := a.Cache.IsCached(cid)
+	a.Estimator.RecordDownload(clientID, len(segment), duration, cached)
+
+	a.Metrics.BytesTransferred.WithLabelValues("GET", "stream").Add(float64(len(segment)))
+	return ctx.Send(segment)
 }

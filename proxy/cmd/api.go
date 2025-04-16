@@ -4,8 +4,12 @@ import (
 	"fmt"
 
 	"github.com/amirhnajafiz/telescope/internal/api"
+	"github.com/amirhnajafiz/telescope/internal/components/abr"
+	"github.com/amirhnajafiz/telescope/internal/components/throughput"
 	"github.com/amirhnajafiz/telescope/internal/config"
 	"github.com/amirhnajafiz/telescope/internal/logr"
+	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
 
@@ -39,10 +43,28 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		metrics.NewServer(cfg.MetricsPort)
 	}
 
+	// create a new IPFS client instance
+	ipfsClient := &ipfs.GatewayClient{
+		BaseURL: cfg.IPFSGateway,
+	}
+
+	estimator := throughput.NewEstimator()
+
+	segmentCache := cache.NewCache()
+
+	abrPolicy := &abr.CacheBasedPolicy{
+		Estimator: estimator,
+		Cache:     segmentCache,
+	}
+
 	// create a new API instance
 	return &api.API{
-		Logr:    logger.Named("api"),
-		Metrics: metricsInstance,
-		Tracer:  tr,
+		Logr:      logger.Named("api"),
+		Metrics:   metricsInstance,
+		Tracer:    tr,
+		IPFS:      ipfsClient,
+		ABR:       *abrPolicy,
+		Cache:     segmentCache,
+		Estimator: estimator,
 	}, nil
 }

@@ -1,6 +1,6 @@
 module github.com/amirhnajafiz/telescope
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/caarlos0/env/v10 v10.0.0
@@ -16,6 +16,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
+	github.com/hare1039/go-mpd v0.0.0-20210711232145-e1e2e1b7d61a // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -26,6 +27,7 @@ require (
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/unki2aut/go-xsd-types v0.0.0-20200220223938-30e5405398f8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect

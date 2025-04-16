@@ -1,6 +1,12 @@
 package api
 
 import (
+	"sync/atomic"
+
+	"github.com/amirhnajafiz/telescope/internal/components/abr"
+	"github.com/amirhnajafiz/telescope/internal/components/throughput"
+	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,9 +18,15 @@ import (
 
 // API struct holds endpoint functions of the proxy server
 type API struct {
-	Logr    *zap.Logger
-	Metrics *metrics.Metrics
-	Tracer  trace.Tracer
+	Logr           *zap.Logger
+	Metrics        *metrics.Metrics
+	Tracer         trace.Tracer
+	IPFS           ipfs.Client
+	ABR            abr.CacheBasedPolicy
+	Cache          *cache.SegmentCache
+	CacheHitCount  atomic.Uint64
+	CacheMissCount atomic.Uint64
+	Estimator      *throughput.Estimator
 }
 
 // Register method takes a fiber.App instance and defines all the endpoints
@@ -45,4 +57,7 @@ func (a *API) Register(app *fiber.App) {
 	contents.Put("/", a.newContent)
 	contents.Get("/:cid", a.getContent)
 	contents.Get("/:cid/stream", a.streamContent)
+
+	app.Static("/videos", "../assets")
+	app.Static("/", "../client")
 }
