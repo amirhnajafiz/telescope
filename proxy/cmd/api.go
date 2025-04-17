@@ -53,7 +53,7 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	}
 
 	// create a new cache instance
-	cacheInstance := cache.NewCache("")
+	cacheInstance := cache.NewCache(cfg.CachePath)
 
 	// create a new controllers instance
 	ctls := controllers.NewControllers()
