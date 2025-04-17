@@ -2,6 +2,7 @@ package ipfs
 
 import (
 	"bytes"
+	"io"
 
 	shell "github.com/ipfs/go-ipfs-api"
 )
@@ -13,7 +14,23 @@ type gateway struct {
 
 // Get retrieves data from IPFS using the provided CID
 func (g *gateway) Get(cid string) ([]byte, error) {
-	return nil, nil
+	// connect to the IPFS node
+	sh := shell.NewShell(g.url)
+
+	// get the data from IPFS
+	reader, err := sh.Cat(cid)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	// read the data from the reader
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 // Put uploads data to IPFS and returns the CID
