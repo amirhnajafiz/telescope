@@ -1,9 +1,9 @@
-package cache
+package files
 
 import "os"
 
-// create a new file with the given path and content
-func writeToFile(path string, content []byte) error {
+// Write create a new file with the given path and content
+func Write(path string, content []byte) error {
 	// open the file for writing
 	file, err := os.Create(path)
 	if err != nil {
@@ -20,8 +20,8 @@ func writeToFile(path string, content []byte) error {
 	return nil
 }
 
-// read the content of a file
-func readFromFile(path string) ([]byte, error) {
+// Read the content of a file
+func Read(path string) ([]byte, error) {
 	// open the file for reading
 	file, err := os.Open(path)
 	if err != nil {
@@ -38,8 +38,8 @@ func readFromFile(path string) ([]byte, error) {
 	return content, nil
 }
 
-// check if a file exists
-func isFileExists(path string) bool {
+// Exists, check if a file exists
+func Exists(path string) bool {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return false
@@ -48,8 +48,8 @@ func isFileExists(path string) bool {
 	return true
 }
 
-// count the number of files in a directory
-func countFilesInDir(path string) (int, error) {
+// CountInDir counts the number of files in a directory
+func CountInDir(path string) (int, error) {
 	// open the directory
 	dir, err := os.Open(path)
 	if err != nil {
@@ -66,8 +66,8 @@ func countFilesInDir(path string) (int, error) {
 	return len(entries), nil
 }
 
-// delete a file
-func deleteFile(path string) error {
+// Delete a file
+func Delete(path string) error {
 	// remove the file
 	err := os.Remove(path)
 	if err != nil {
