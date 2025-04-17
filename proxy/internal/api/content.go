@@ -24,7 +24,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	}
 
 	// rewrite MPD via ABR policy
-	rewritten, err := a.ABR.RewriteMPD(originalMPD, clientID)
+	rewritten, err := a.Ctls.CacheBasedPolicy.RewriteMPD(originalMPD, clientID)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "rewrite").Inc()
 		return ctx.Status(fiber.StatusInternalServerError).SendString("failed to rewrite manifest")
@@ -72,7 +72,7 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	duration := time.Since(start)
 	clientID := ctx.Get("X-Client-ID", "default")
 	// cached := a.Cache.IsCached(cid) // TODO: update this to use the cache system
-	a.Estimator.RecordDownload(clientID, len(segment), duration, true)
+	a.Ctls.Estimator.RecordDownload(clientID, len(segment), duration, true)
 
 	a.Metrics.BytesTransferred.WithLabelValues("GET", "stream").Add(float64(len(segment)))
 	return ctx.Send(segment)

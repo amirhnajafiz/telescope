@@ -1,8 +1,7 @@
 package api
 
 import (
-	"github.com/amirhnajafiz/telescope/internal/components/abr"
-	"github.com/amirhnajafiz/telescope/internal/components/throughput"
+	"github.com/amirhnajafiz/telescope/internal/controllers"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
 	"github.com/amirhnajafiz/telescope/internal/storage/database"
 	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
@@ -17,6 +16,8 @@ import (
 
 // API struct holds endpoint functions of the proxy server
 type API struct {
+	Ctls *controllers.Controllers
+
 	Logr    *zap.Logger
 	Metrics *metrics.Metrics
 	Tracer  trace.Tracer
@@ -24,9 +25,6 @@ type API struct {
 	Cache    *cache.Cache
 	IPFS     ipfs.Client
 	Database database.DB
-
-	ABR       abr.CacheBasedPolicy
-	Estimator *throughput.Estimator
 }
 
 // Register method takes a fiber.App instance and defines all the endpoints

@@ -4,9 +4,8 @@ import (
 	"fmt"
 
 	"github.com/amirhnajafiz/telescope/internal/api"
-	"github.com/amirhnajafiz/telescope/internal/components/abr"
-	"github.com/amirhnajafiz/telescope/internal/components/throughput"
 	"github.com/amirhnajafiz/telescope/internal/config"
+	"github.com/amirhnajafiz/telescope/internal/controllers"
 	"github.com/amirhnajafiz/telescope/internal/logr"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
 	"github.com/amirhnajafiz/telescope/internal/storage/database"
@@ -53,26 +52,20 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		return nil, fmt.Errorf("failed to create database: %w", err)
 	}
 
-	estimator := throughput.NewEstimator()
+	// create a new cache instance
+	cacheInstance := cache.NewCache("")
 
-	segmentCache := cache.NewCache("")
-
-	abrPolicy := &abr.CacheBasedPolicy{
-		Estimator: estimator,
-		Cache:     segmentCache,
-	}
+	// create a new controllers instance
+	ctls := controllers.NewControllers()
 
 	// create a new API instance
 	return &api.API{
-		Logr:    logger.Named("api"),
-		Metrics: metricsInstance,
-		Tracer:  tr,
-
-		Cache:    segmentCache,
+		Ctls:     ctls,
+		Logr:     logger.Named("api"),
+		Metrics:  metricsInstance,
+		Tracer:   tr,
+		Cache:    cacheInstance,
 		IPFS:     ipfsClient,
 		Database: db,
-
-		ABR:       *abrPolicy,
-		Estimator: estimator,
 	}, nil
 }

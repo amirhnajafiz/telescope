@@ -1,14 +1,12 @@
-package abr
+package controllers
 
 import (
-	"github.com/amirhnajafiz/telescope/internal/components/throughput"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
-
 	"github.com/hare1039/go-mpd"
 )
 
 type CacheBasedPolicy struct {
-	Estimator *throughput.Estimator
+	Estimator *Estimator
 	Cache     *cache.Cache
 }
 

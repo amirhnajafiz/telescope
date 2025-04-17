@@ -1,4 +1,4 @@
-package throughput
+package controllers
 
 import (
 	"sync"
