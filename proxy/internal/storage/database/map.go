@@ -2,18 +2,18 @@ package database
 
 // mapping is a simple in-memory key-value store
 type mapping struct {
-	Entities map[string]string `json:"entities"`
+	entities map[string]string
 }
 
 // Add creates a new mapping instance
 func (m *mapping) Add(key string, value string) error {
-	m.Entities[key] = value
+	m.entities[key] = value
 	return nil
 }
 
 // Get retrieves a value by key
 func (m *mapping) Get(key string) (string, error) {
-	if value, ok := m.Entities[key]; ok {
+	if value, ok := m.entities[key]; ok {
 		return value, nil
 	}
 
@@ -24,7 +24,7 @@ func (m *mapping) Get(key string) (string, error) {
 func (m *mapping) List() ([]string, error) {
 	var items []string
 
-	for key := range m.Entities {
+	for key := range m.entities {
 		items = append(items, key)
 	}
 

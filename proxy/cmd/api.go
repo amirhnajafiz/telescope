@@ -47,10 +47,7 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	ipfsClient := ipfs.NewClient(cfg.IPFSGateway)
 
 	// create a new database instance
-	db, err := database.NewDB("map")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create database: %w", err)
-	}
+	dbInstance := database.NewDB()
 
 	// create a new cache instance
 	cacheInstance := cache.NewCache(cfg.CachePath)
@@ -66,6 +63,6 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		Tracer:   tr,
 		Cache:    cacheInstance,
 		IPFS:     ipfsClient,
-		Database: db,
+		Database: dbInstance,
 	}, nil
 }
