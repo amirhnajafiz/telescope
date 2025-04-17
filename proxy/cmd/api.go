@@ -9,6 +9,7 @@ import (
 	"github.com/amirhnajafiz/telescope/internal/config"
 	"github.com/amirhnajafiz/telescope/internal/logr"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+	"github.com/amirhnajafiz/telescope/internal/storage/database"
 	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
@@ -46,6 +47,12 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	// create a new IPFS client instance
 	ipfsClient := ipfs.NewClient(cfg.IPFSGateway)
 
+	// create a new database instance
+	db, err := database.NewDB("map")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database: %w", err)
+	}
+
 	estimator := throughput.NewEstimator()
 
 	segmentCache := cache.NewCache("")
@@ -57,12 +64,15 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 
 	// create a new API instance
 	return &api.API{
-		Logr:      logger.Named("api"),
-		Metrics:   metricsInstance,
-		Tracer:    tr,
-		IPFS:      ipfsClient,
+		Logr:    logger.Named("api"),
+		Metrics: metricsInstance,
+		Tracer:  tr,
+
+		Cache:    segmentCache,
+		IPFS:     ipfsClient,
+		Database: db,
+
 		ABR:       *abrPolicy,
-		Cache:     segmentCache,
 		Estimator: estimator,
 	}, nil
 }

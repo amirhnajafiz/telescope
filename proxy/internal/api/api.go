@@ -4,6 +4,7 @@ import (
 	"github.com/amirhnajafiz/telescope/internal/components/abr"
 	"github.com/amirhnajafiz/telescope/internal/components/throughput"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+	"github.com/amirhnajafiz/telescope/internal/storage/database"
 	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 
@@ -16,12 +17,15 @@ import (
 
 // API struct holds endpoint functions of the proxy server
 type API struct {
-	Logr      *zap.Logger
-	Metrics   *metrics.Metrics
-	Tracer    trace.Tracer
-	IPFS      ipfs.Client
+	Logr    *zap.Logger
+	Metrics *metrics.Metrics
+	Tracer  trace.Tracer
+
+	Cache    *cache.Cache
+	IPFS     ipfs.Client
+	Database database.DB
+
 	ABR       abr.CacheBasedPolicy
-	Cache     *cache.Cache
 	Estimator *throughput.Estimator
 }
 
