@@ -3,15 +3,14 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/amirhnajafiz/telescope/internal/abr"
 	"github.com/amirhnajafiz/telescope/internal/api"
-	"github.com/amirhnajafiz/telescope/internal/cache"
 	"github.com/amirhnajafiz/telescope/internal/config"
-	"github.com/amirhnajafiz/telescope/internal/ipfs"
+	"github.com/amirhnajafiz/telescope/internal/controllers"
 	"github.com/amirhnajafiz/telescope/internal/logr"
+	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
-	"github.com/amirhnajafiz/telescope/internal/throughput"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -44,27 +43,24 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	}
 
 	// create a new IPFS client instance
-	ipfsClient := &ipfs.GatewayClient{
-		BaseURL: cfg.IPFSGateway,
-	}
+	ipfsClient := ipfs.NewClient(cfg.IPFSGateway)
 
-	estimator := throughput.NewEstimator()
+	// create a new cache instance
+	cacheInstance := cache.NewCache("")
 
-	segmentCache := cache.NewCache()
-
-	abrPolicy := &abr.CacheBasedPolicy{
-		Estimator: estimator,
-		Cache:     segmentCache,
+	// create a new abr-rewriter controller
+	abrRewriter := controllers.AbrRewriter{
+		Estimator: controllers.NewEstimator(),
+		Cache:     cacheInstance,
 	}
 
 	// create a new API instance
 	return &api.API{
-		Logr:      logger.Named("api"),
-		Metrics:   metricsInstance,
-		Tracer:    tr,
-		IPFS:      ipfsClient,
-		ABR:       *abrPolicy,
-		Cache:     segmentCache,
-		Estimator: estimator,
+		Logr:        logger.Named("api"),
+		Metrics:     metricsInstance,
+		Tracer:      tr,
+		IPFS:        ipfsClient,
+		Cache:       cacheInstance,
+		ABRRewriter: abrRewriter,
 	}, nil
 }
