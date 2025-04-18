@@ -18,14 +18,14 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	clientID := ctx.Get("X-Client-ID", "default")
 
 	// Fetch original MPD file from IPFS
-	originalMPD, err := a.IPFS.FetchMPD(cid)
+	originalMPD, err := a.IPFS.Get(cid)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "manifest").Inc()
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
 
 	// Rewrite MPD via ABR policy
-	rewritten, err := a.ABR.RewriteMPD(originalMPD, clientID, cid)
+	rewritten, err := a.ABRRewriter.RewriteMPD(originalMPD, clientID, cid)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "rewrite").Inc()
 		return ctx.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("failed to rewrite manifest:\n %s", err))
@@ -52,14 +52,13 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	// Mark metrics
 	cacheKey := fmt.Sprintf("%s/%s", cid, filename)
 
-	if a.Cache.IsCached(cacheKey) {
+	if _, err := a.Cache.Retrieve(cacheKey); err != nil {
 		a.Metrics.CacheHits.Inc()
 		a.CacheHitCount.Add(1)
 	} else {
 		a.Metrics.CacheMisses.Inc()
 		a.CacheMissCount.Add(1)
 	}
-	a.Cache.MarkCached(cacheKey)
 
 	// calculate cache ratio
 	total := float64(a.CacheHitCount.Load() + a.CacheMissCount.Load())
@@ -70,7 +69,7 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 
 	// Fetch from IPFS
 	start := time.Now()
-	segment, err := a.IPFS.FetchSegment(fmt.Sprintf("%s/%s", cid, filename))
+	segment, err := a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "stream").Inc()
 		return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
@@ -78,8 +77,8 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	duration := time.Since(start)
 
 	clientID := ctx.Get("X-Client-ID", "default")
-	cached := a.Cache.IsCached(cacheKey)
-	a.Estimator.RecordDownload(clientID, len(segment), duration, cached)
+	_, cached := a.Cache.Retrieve(cacheKey)
+	a.ABRRewriter.Estimator.RecordDownload(clientID, len(segment), duration, cached == nil)
 
 	a.Metrics.BytesTransferred.WithLabelValues("GET", "stream").Add(float64(len(segment)))
 	ctx.Set("Content-Type", "video/mp4")
@@ -93,17 +92,16 @@ func (a *API) streamInit(ctx *fiber.Ctx) error {
 
 	cacheKey := fmt.Sprintf("%s/%s", cid, filename)
 
-	if a.Cache.IsCached(cacheKey) {
+	if _, err := a.Cache.Retrieve(cacheKey); err == nil {
 		a.Metrics.CacheHits.Inc()
 		a.CacheHitCount.Add(1)
 	} else {
 		a.Metrics.CacheMisses.Inc()
 		a.CacheMissCount.Add(1)
 	}
-	a.Cache.MarkCached(cacheKey)
 
 	start := time.Now()
-	data, err := a.IPFS.FetchSegment(fmt.Sprintf("%s/%s", cid, filename))
+	data, err := a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "init").Inc()
 		return ctx.Status(fiber.StatusBadGateway).SendString("init fetch failed")
@@ -111,8 +109,8 @@ func (a *API) streamInit(ctx *fiber.Ctx) error {
 	duration := time.Since(start)
 
 	clientID := ctx.Get("X-Client-ID", "default")
-	cached := a.Cache.IsCached(cacheKey)
-	a.Estimator.RecordDownload(clientID, len(data), duration, cached)
+	_, cached := a.Cache.Retrieve(cacheKey)
+	a.ABRRewriter.Estimator.RecordDownload(clientID, len(data), duration, cached == nil)
 
 	a.Metrics.BytesTransferred.WithLabelValues("GET", "init").Add(float64(len(data)))
 	ctx.Set("Content-Type", "video/mp4")
