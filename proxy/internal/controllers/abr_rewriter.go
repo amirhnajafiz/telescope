@@ -2,20 +2,32 @@ package controllers
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
 
 	"github.com/hare1039/go-mpd"
+	"go.uber.org/zap"
 )
 
+// AbrRewriter is a structure that rewrites the MPD file based on the current bandwidth
 type AbrRewriter struct {
-	Estimator *Estimator
 	Cache     *cache.Cache
+	Estimator *Estimator
+	Logr      *zap.Logger
 }
 
+// NewAbrRewriter creates a new instance of AbrRewriter
+func NewAbrRewriter(cache *cache.Cache, logr *zap.Logger) *AbrRewriter {
+	return &AbrRewriter{
+		Estimator: NewEstimator(),
+		Cache:     cache,
+		Logr:      logr,
+	}
+}
+
+// RewriteMPD rewrites the MPD file based on the current bandwidth and cache status
 func (p *AbrRewriter) RewriteMPD(original []byte, clientID string, cid string) ([]byte, error) {
-	log.Printf("Rewriting MPD for client %s with CID %s", clientID, cid)
+	p.Logr.Info("Rewriting MPD", zap.String("clientID", clientID), zap.String("cid", cid))
 
 	tree := new(mpd.MPD)
 	if err := tree.Decode(original); err != nil {

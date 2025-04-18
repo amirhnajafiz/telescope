@@ -3,24 +3,19 @@ package controllers
 import (
 	"sync"
 	"time"
+
+	"github.com/amirhnajafiz/telescope/pkg/models"
 )
 
-type ClientEstimate struct {
-	Uncached float64 // Tn
-	Cached   float64 // Tg
-	CurBW    float64 // Tc
-	Alpha    float64 // smoothing factor
-}
-
 type Estimator struct {
-	clients map[string]*ClientEstimate
+	clients map[string]*models.Estimane
 	mu      sync.RWMutex
 }
 
 // NewEstimator returns a fresh estimator
 func NewEstimator() *Estimator {
 	return &Estimator{
-		clients: make(map[string]*ClientEstimate),
+		clients: make(map[string]*models.Estimane),
 	}
 }
 
@@ -33,7 +28,7 @@ func (e *Estimator) RecordDownload(clientID string, size int, duration time.Dura
 
 	est, exists := e.clients[clientID]
 	if !exists {
-		est = &ClientEstimate{
+		est = &models.Estimane{
 			Cached:   bw,
 			Uncached: bw,
 			CurBW:    bw,
