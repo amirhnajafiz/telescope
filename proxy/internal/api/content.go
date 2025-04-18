@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,23 +17,23 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	cid := ctx.Params("cid")
 	clientID := ctx.Get("X-Client-ID", "default")
 
-	// fetch original MPD file from IPFS
-	originalMPD, err := a.IPFS.Get(cid)
+	// Fetch original MPD file from IPFS
+	originalMPD, err := a.IPFS.FetchMPD(cid)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "manifest").Inc()
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
 
-	// rewrite MPD via ABR policy
-	rewritten, err := a.Ctls.CacheBasedPolicy.RewriteMPD(originalMPD, clientID)
+	// Rewrite MPD via ABR policy
+	rewritten, err := a.ABR.RewriteMPD(originalMPD, clientID, cid)
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "rewrite").Inc()
-		return ctx.Status(fiber.StatusInternalServerError).SendString("failed to rewrite manifest")
+		return ctx.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("failed to rewrite manifest:\n %s", err))
 	}
 
 	a.Metrics.BytesTransferred.WithLabelValues("GET", "manifest").Add(float64(len(rewritten)))
 
-	ctx.Type("application/dash+xml")
+	ctx.Set("Content-Type", "application/dash+xml")
 	return ctx.Send(rewritten)
 }
 
@@ -44,36 +45,76 @@ func (a *API) listContents(ctx *fiber.Ctx) error {
 // streamContent handles the streaming of content over DASH
 func (a *API) streamContent(ctx *fiber.Ctx) error {
 	cid := ctx.Params("cid")
+	seg := ctx.Params("seg")
 
-	// TODO: update this to use the cache system
-	// if a.Cache.IsCached(cid) {
-	// 	a.Metrics.CacheHits.Inc()
-	// } else {
-	// 	a.Metrics.CacheMisses.Inc()
-	// }
-	// a.Cache.MarkCached(cid)
+	filename := fmt.Sprintf("chunk%s.m4s", seg)
 
-	// calculate cache ratio from local counters
-	// TODO: update this to use the cache system
-	// total := float64(a.CacheHitCount.Load() + a.CacheMissCount.Load())
-	// if total > 0 {
-	// 	ratio := float64(a.CacheHitCount.Load()) / total
-	// 	a.Metrics.CacheRatio.Set(ratio)
-	// }
+	// Mark metrics
+	cacheKey := fmt.Sprintf("%s/%s", cid, filename)
 
+	if a.Cache.IsCached(cacheKey) {
+		a.Metrics.CacheHits.Inc()
+		a.CacheHitCount.Add(1)
+	} else {
+		a.Metrics.CacheMisses.Inc()
+		a.CacheMissCount.Add(1)
+	}
+	a.Cache.MarkCached(cacheKey)
+
+	// calculate cache ratio
+	total := float64(a.CacheHitCount.Load() + a.CacheMissCount.Load())
+	if total > 0 {
+		ratio := float64(a.CacheHitCount.Load()) / total
+		a.Metrics.CacheRatio.Set(ratio)
+	}
+
+	// Fetch from IPFS
 	start := time.Now()
-
-	segment, err := a.IPFS.Get(cid)
+	segment, err := a.IPFS.FetchSegment(fmt.Sprintf("%s/%s", cid, filename))
 	if err != nil {
 		a.Metrics.ErrorCount.WithLabelValues("GET", "stream").Inc()
 		return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
 	}
-
 	duration := time.Since(start)
+
 	clientID := ctx.Get("X-Client-ID", "default")
-	// cached := a.Cache.IsCached(cid) // TODO: update this to use the cache system
-	a.Ctls.Estimator.RecordDownload(clientID, len(segment), duration, true)
+	cached := a.Cache.IsCached(cacheKey)
+	a.Estimator.RecordDownload(clientID, len(segment), duration, cached)
 
 	a.Metrics.BytesTransferred.WithLabelValues("GET", "stream").Add(float64(len(segment)))
+	ctx.Set("Content-Type", "video/mp4")
 	return ctx.Send(segment)
+}
+
+func (a *API) streamInit(ctx *fiber.Ctx) error {
+	cid := ctx.Params("cid")
+	//TODO handle multiple bitrate + use dynamic init files per quality level (Multi-client evaluation / prefetching)
+	filename := "init.mp4"
+
+	cacheKey := fmt.Sprintf("%s/%s", cid, filename)
+
+	if a.Cache.IsCached(cacheKey) {
+		a.Metrics.CacheHits.Inc()
+		a.CacheHitCount.Add(1)
+	} else {
+		a.Metrics.CacheMisses.Inc()
+		a.CacheMissCount.Add(1)
+	}
+	a.Cache.MarkCached(cacheKey)
+
+	start := time.Now()
+	data, err := a.IPFS.FetchSegment(fmt.Sprintf("%s/%s", cid, filename))
+	if err != nil {
+		a.Metrics.ErrorCount.WithLabelValues("GET", "init").Inc()
+		return ctx.Status(fiber.StatusBadGateway).SendString("init fetch failed")
+	}
+	duration := time.Since(start)
+
+	clientID := ctx.Get("X-Client-ID", "default")
+	cached := a.Cache.IsCached(cacheKey)
+	a.Estimator.RecordDownload(clientID, len(data), duration, cached)
+
+	a.Metrics.BytesTransferred.WithLabelValues("GET", "init").Add(float64(len(data)))
+	ctx.Set("Content-Type", "video/mp4")
+	return ctx.Send(data)
 }

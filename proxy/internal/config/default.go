@@ -7,7 +7,5 @@ func Default() *Config {
 		Debug:       true,
 		Jaeger:      "",
 		MetricsPort: 0,
-		CachePath:   "tmp/telescope-cache",
-		IPFSGateway: "http://localhost:8080/ipfs/",
 	}
 }

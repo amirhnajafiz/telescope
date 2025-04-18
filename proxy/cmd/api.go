@@ -3,15 +3,15 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/amirhnajafiz/telescope/internal/abr"
 	"github.com/amirhnajafiz/telescope/internal/api"
+	"github.com/amirhnajafiz/telescope/internal/cache"
 	"github.com/amirhnajafiz/telescope/internal/config"
-	"github.com/amirhnajafiz/telescope/internal/controllers"
+	"github.com/amirhnajafiz/telescope/internal/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/logr"
-	"github.com/amirhnajafiz/telescope/internal/storage/cache"
-	"github.com/amirhnajafiz/telescope/internal/storage/database"
-	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/tracing"
+	"github.com/amirhnajafiz/telescope/internal/throughput"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -44,25 +44,27 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	}
 
 	// create a new IPFS client instance
-	ipfsClient := ipfs.NewClient(cfg.IPFSGateway)
+	ipfsClient := &ipfs.GatewayClient{
+		BaseURL: cfg.IPFSGateway,
+	}
 
-	// create a new database instance
-	dbInstance := database.NewDB()
+	estimator := throughput.NewEstimator()
 
-	// create a new cache instance
-	cacheInstance := cache.NewCache(cfg.CachePath)
+	segmentCache := cache.NewCache()
 
-	// create a new controllers instance
-	ctls := controllers.NewControllers()
+	abrPolicy := &abr.CacheBasedPolicy{
+		Estimator: estimator,
+		Cache:     segmentCache,
+	}
 
 	// create a new API instance
 	return &api.API{
-		Ctls:     ctls,
-		Logr:     logger.Named("api"),
-		Metrics:  metricsInstance,
-		Tracer:   tr,
-		Cache:    cacheInstance,
-		IPFS:     ipfsClient,
-		Database: dbInstance,
+		Logr:      logger.Named("api"),
+		Metrics:   metricsInstance,
+		Tracer:    tr,
+		IPFS:      ipfsClient,
+		ABR:       *abrPolicy,
+		Cache:     segmentCache,
+		Estimator: estimator,
 	}, nil
 }

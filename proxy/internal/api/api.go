@@ -1,11 +1,13 @@
 package api
 
 import (
-	"github.com/amirhnajafiz/telescope/internal/controllers"
-	"github.com/amirhnajafiz/telescope/internal/storage/cache"
-	"github.com/amirhnajafiz/telescope/internal/storage/database"
-	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
+	"sync/atomic"
+
+	"github.com/amirhnajafiz/telescope/internal/abr"
+	"github.com/amirhnajafiz/telescope/internal/cache"
+	"github.com/amirhnajafiz/telescope/internal/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
+	"github.com/amirhnajafiz/telescope/internal/throughput"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -16,15 +18,15 @@ import (
 
 // API struct holds endpoint functions of the proxy server
 type API struct {
-	Ctls *controllers.Controllers
-
-	Logr    *zap.Logger
-	Metrics *metrics.Metrics
-	Tracer  trace.Tracer
-
-	Cache    *cache.Cache
-	IPFS     ipfs.Client
-	Database database.DB
+	Logr           *zap.Logger
+	Metrics        *metrics.Metrics
+	Tracer         trace.Tracer
+	IPFS           ipfs.Client
+	ABR            abr.CacheBasedPolicy
+	Cache          *cache.SegmentCache
+	CacheHitCount  atomic.Uint64
+	CacheMissCount atomic.Uint64
+	Estimator      *throughput.Estimator
 }
 
 // Register method takes a fiber.App instance and defines all the endpoints
@@ -53,8 +55,9 @@ func (a *API) Register(app *fiber.App) {
 	// define the contents endpoints
 	contents.Get("/", a.listContents)
 	contents.Put("/", a.newContent)
+	contents.Get("/:cid/init/stream", a.streamInit)
+	contents.Get("/:cid/:seg/stream", a.streamContent)
 	contents.Get("/:cid", a.getContent)
-	contents.Get("/:cid/stream", a.streamContent)
 
 	app.Static("/videos", "../assets")
 	app.Static("/", "../client")
