@@ -5,30 +5,41 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
 // getContent handles the download of content, used for getting mpd files
 func (a *API) getContent(ctx *fiber.Ctx) error {
+	// get the cid from the URL
 	cid := ctx.Params("cid")
+
+	// get clientId from the request header
 	clientID := ctx.Get("X-Client-ID", "default")
 
-	// Fetch original MPD file from IPFS
-	originalMPD, err := a.IPFS.Get(cid)
+	// fetch MPD file from IPFS
+	mpd, err := a.IPFS.Get(cid)
 	if err != nil {
-		a.Metrics.ErrorCount.WithLabelValues("GET", "manifest").Inc()
+		a.Logr.Error("failed to fetch mpd", zap.String("cid", cid), zap.Error(err))
+
+		a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), ctx.Path()).Inc()
+
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
 
-	// Rewrite MPD via ABR policy
-	rewritten, err := a.ABRRewriter.RewriteMPD(originalMPD, clientID, cid)
+	// rewrite MPD via ABR policy
+	rewritten, err := a.ABRRewriter.RewriteMPD(mpd, clientID, cid)
 	if err != nil {
-		a.Metrics.ErrorCount.WithLabelValues("GET", "rewrite").Inc()
+		a.Logr.Error("failed to rewrite mpd", zap.String("cid", cid), zap.Error(err))
+
+		a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), ctx.Path()).Inc()
+
 		return ctx.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("failed to rewrite manifest:\n %s", err))
 	}
 
-	a.Metrics.BytesTransferred.WithLabelValues("GET", "manifest").Add(float64(len(rewritten)))
+	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(rewritten)))
 
 	ctx.Set("Content-Type", "application/dash+xml")
+
 	return ctx.Send(rewritten)
 }
 
@@ -39,17 +50,27 @@ func (a *API) listContents(ctx *fiber.Ctx) error {
 
 // streamContent handles the streaming of content over DASH
 func (a *API) streamContent(ctx *fiber.Ctx) error {
+	// get the cid and segment from the URL
 	cid := ctx.Params("cid")
 	seg := ctx.Params("seg")
 
-	filename := fmt.Sprintf("chunk%s.m4s", seg)
+	// get clientId from the request header
+	clientID := ctx.Get("X-Client-ID", "default")
 
-	// Mark metrics
+	filename := fmt.Sprintf("chunk%s.m4s", seg)
 	cacheKey := fmt.Sprintf("%s/%s", cid, filename)
-	if _, err := a.Cache.Retrieve(cacheKey); err != nil {
-		a.Metrics.CacheHits.Inc()
-	} else {
+
+	// check if the segment is cached
+	var cached bool
+	segment, err := a.Cache.Retrieve(cacheKey)
+	if err != nil {
+		cached = false
+		a.Logr.Warn("cache miss", zap.String("cid", cid), zap.String("filename", filename), zap.Error(err))
 		a.Metrics.CacheMisses.Inc()
+	} else {
+		cached = true
+		a.Logr.Info("cache hit", zap.String("cid", cid), zap.String("filename", filename))
+		a.Metrics.CacheHits.Inc()
 	}
 
 	// calculate cache ratio
@@ -59,21 +80,35 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 		a.Metrics.CacheRatio.Set(ratio)
 	}
 
-	// Fetch from IPFS
+	// fetch the segment from IPFS if not cached
 	start := time.Now()
-	segment, err := a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
-	if err != nil {
-		a.Metrics.ErrorCount.WithLabelValues("GET", "stream").Inc()
-		return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
+	if segment == nil {
+		segment, err = a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
+		if err != nil {
+			a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), ctx.Path()).Inc()
+			return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
+		}
 	}
 	duration := time.Since(start)
 
-	clientID := ctx.Get("X-Client-ID", "default")
-	_, cached := a.Cache.Retrieve(cacheKey)
-	a.ABRRewriter.Estimator.RecordDownload(clientID, len(segment), duration, cached == nil)
+	a.ABRRewriter.Estimator.RecordDownload(clientID, len(segment), duration, cached)
 
-	a.Metrics.BytesTransferred.WithLabelValues("GET", "stream").Add(float64(len(segment)))
+	// cache the segment
+	if !cached {
+		if err := a.Cache.Store(cacheKey, segment); err != nil {
+			a.Logr.Error(
+				"failed to store segment in cache",
+				zap.String("cid", cid),
+				zap.String("filename", filename),
+				zap.Error(err),
+			)
+		}
+	}
+
+	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment)))
+
 	ctx.Set("Content-Type", "video/mp4")
+
 	return ctx.Send(segment)
 }
 
