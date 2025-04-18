@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/amirhnajafiz/telescope/pkg/files"
 )
@@ -9,8 +10,8 @@ import (
 // Cache is an interface for our cache system to store segment records by CID
 type Cache struct {
 	baseDir   string
-	hitCount  int
-	missCount int
+	hitCount  int64
+	missCount int64
 }
 
 // NewCache creates a new cache instance
@@ -31,11 +32,11 @@ func (c *Cache) Store(cid string, data []byte) error {
 func (c *Cache) Retrieve(cid string) ([]byte, error) {
 	path := fmt.Sprintf("%s/%s", c.baseDir, cid)
 	if !files.Exists(path) {
-		c.missCount++
+		atomic.AddInt64(&c.missCount, 1)
 		return nil, fmt.Errorf("file %s does not exist", cid)
 	}
 
-	c.hitCount++
+	atomic.AddInt64(&c.hitCount, 1)
 
 	return files.Read(path)
 }
@@ -47,10 +48,10 @@ func (c *Cache) Size() (int, error) {
 
 // GetHitCounts returns the number of cache hits
 func (c *Cache) GetHitCounts() int {
-	return c.hitCount
+	return int(atomic.LoadInt64(&c.hitCount))
 }
 
 // GetMissCounts returns the number of cache misses
 func (c *Cache) GetMissCounts() int {
-	return c.missCount
+	return int(atomic.LoadInt64(&c.missCount))
 }
