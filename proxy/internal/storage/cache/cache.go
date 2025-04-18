@@ -8,7 +8,9 @@ import (
 
 // Cache is an interface for our cache system to store segment records by CID
 type Cache struct {
-	baseDir string
+	baseDir   string
+	hitCount  int
+	missCount int
 }
 
 // NewCache creates a new cache instance
@@ -27,8 +29,11 @@ func (c *Cache) Store(cid string, data []byte) error {
 func (c *Cache) Retrieve(cid string) ([]byte, error) {
 	path := fmt.Sprintf("%s/%s", c.baseDir, cid)
 	if !files.Exists(path) {
+		c.missCount++
 		return nil, fmt.Errorf("file %s does not exist", cid)
 	}
+
+	c.hitCount++
 
 	return files.Read(path)
 }
@@ -36,4 +41,14 @@ func (c *Cache) Retrieve(cid string) ([]byte, error) {
 // Size returns the number of files in the cache directory
 func (c *Cache) Size() (int, error) {
 	return files.CountInDir(c.baseDir)
+}
+
+// GetHitCounts returns the number of cache hits
+func (c *Cache) GetHitCounts() int {
+	return c.hitCount
+}
+
+// GetMissCounts returns the number of cache misses
+func (c *Cache) GetMissCounts() int {
+	return c.missCount
 }

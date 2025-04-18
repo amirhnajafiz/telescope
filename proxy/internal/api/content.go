@@ -51,19 +51,16 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 
 	// Mark metrics
 	cacheKey := fmt.Sprintf("%s/%s", cid, filename)
-
 	if _, err := a.Cache.Retrieve(cacheKey); err != nil {
 		a.Metrics.CacheHits.Inc()
-		a.CacheHitCount.Add(1)
 	} else {
 		a.Metrics.CacheMisses.Inc()
-		a.CacheMissCount.Add(1)
 	}
 
 	// calculate cache ratio
-	total := float64(a.CacheHitCount.Load() + a.CacheMissCount.Load())
+	total := float64(a.Cache.GetHitCounts() + a.Cache.GetMissCounts())
 	if total > 0 {
-		ratio := float64(a.CacheHitCount.Load()) / total
+		ratio := float64(a.Cache.GetHitCounts()) / total
 		a.Metrics.CacheRatio.Set(ratio)
 	}
 
@@ -91,13 +88,10 @@ func (a *API) streamInit(ctx *fiber.Ctx) error {
 	filename := "init.mp4"
 
 	cacheKey := fmt.Sprintf("%s/%s", cid, filename)
-
 	if _, err := a.Cache.Retrieve(cacheKey); err == nil {
 		a.Metrics.CacheHits.Inc()
-		a.CacheHitCount.Add(1)
 	} else {
 		a.Metrics.CacheMisses.Inc()
-		a.CacheMissCount.Add(1)
 	}
 
 	start := time.Now()
