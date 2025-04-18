@@ -16,7 +16,9 @@ type Cache struct {
 // NewCache creates a new cache instance
 func NewCache(bd string) *Cache {
 	return &Cache{
-		baseDir: bd,
+		baseDir:   bd,
+		hitCount:  0,
+		missCount: 0,
 	}
 }
 
