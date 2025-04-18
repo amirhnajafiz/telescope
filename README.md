@@ -4,19 +4,14 @@
 
 This project is a **rebuilt version** of the original [Telescope proxy](https://github.com/SBUNetSys/Telescope), redesigned from scratch with a clean architecture, modern observability tools, and improved ABR logic based on formal analysis.
 
----
-
 ##  What’s New in This Version?
 
-- ✅ Modular and idiomatic **Golang project structure** (`cmd/`, `internal/`)
+- ✅ Modular and idiomatic **Golang project structure** (`cmd/`, `internal/`, `pkg/`)
 - ✅ Rewritten **throughput estimation engine** using exponential smoothing for cached and uncached segments
 - ✅ Paper-aligned **ABR logic** using accurate bandwidth deltas (`Tc - Tn`, `Tc - Tg`) to rewrite DASH MPDs dynamically
 - ✅ Real-time **Prometheus metrics** and **OpenTelemetry tracing**
 - ✅ Full-featured **DASH.js browser client** to test streaming behavior and adaptation live
-- ✅ In-memory segment **cache tracking system**
-- ✅ Fully tested core modules with unit tests for ABR, cache, and estimator
-
----
+- ✅ File segment **cache tracking system**
 
 ## How Video Streaming Works with Telescope
 
@@ -63,12 +58,11 @@ Telescope exposes real-time metrics and traces to support debugging, monitoring,
 - **Bandwidth Estimation** – based on segment size and transfer time
 - **Throughput Tracking** – smoothed client `Tc`, cached `Tg`, uncached `Tn`
 - **Cache Awareness** – per-segment cache hit/miss ratio
-- **Active Connections** – current number of live users
 - **Segment Quality History** – logs how quality levels shift over time
 
 ### Observability Tools
 
-- **Prometheus**: exports metrics via `/metrics`
+- **Prometheus**: exports metrics via `:9090/metrics`
 - **Jaeger/OTel**: full support for distributed tracing via OpenTelemetry
 
 ---
@@ -77,12 +71,12 @@ Telescope exposes real-time metrics and traces to support debugging, monitoring,
 
 ```
 telescope/
-├── cmd/               → API registerer-AKA Serviec Injector (api.go)
-├── internal/          → core modules (api, cache, abr, throughput, telemetry)
-├── client/            → DASH.js HTML test client
-├── assets/            → .mpd + .m4s video files (for local testing)
-├── scripts/           → utils (downloaders, etc.)
+├── proxy/internal/cmd/      → API registerer-AKA Serviec Injector (api.go)
+├── proxy/internal/          → core modules (api, cache, abr, throughput, telemetry)
+├── configs/                 → example proxy config file
+├── client/                  → DASH.js HTML test client
+├── assets/                  → .mpd + .m4s video files (for local testing)
+├── scripts/                 → utils (downloaders, etc.)
 ```
 
 ---
-
