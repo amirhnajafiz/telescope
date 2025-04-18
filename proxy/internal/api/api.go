@@ -20,7 +20,7 @@ type API struct {
 	Tracer      trace.Tracer
 	IPFS        ipfs.Client
 	Cache       *cache.Cache
-	ABRRewriter controllers.AbrRewriter
+	ABRRewriter *controllers.AbrRewriter
 }
 
 // Register method takes a fiber.App instance and defines all the endpoints

@@ -48,11 +48,8 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	// create a new cache instance
 	cacheInstance := cache.NewCache(cfg.CachePath)
 
-	// create a new abr-rewriter controller
-	abrRewriter := controllers.AbrRewriter{
-		Estimator: controllers.NewEstimator(),
-		Cache:     cacheInstance,
-	}
+	// create a new abr-rewriter
+	abrRewriter := controllers.NewAbrRewriter(cacheInstance, logger.Named("abr-rewriter"))
 
 	// create a new API instance
 	return &api.API{
