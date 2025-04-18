@@ -7,11 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// newContent handles the upload of content, used for uploading
-func (a *API) newContent(ctx *fiber.Ctx) error {
-	return nil
-}
-
 // getContent handles the download of content, used for getting mpd files
 func (a *API) getContent(ctx *fiber.Ctx) error {
 	cid := ctx.Params("cid")
