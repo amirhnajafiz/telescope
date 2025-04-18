@@ -4,16 +4,26 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 // getContent handles the download of content, used for getting mpd files
 func (a *API) getContent(ctx *fiber.Ctx) error {
+	// start the tracing span
+	_, span := a.Tracer.Start(ctx.Context(), ctx.Path(), trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
 	// get the cid from the URL
 	cid := ctx.Params("cid")
 
 	// get clientId from the request header
 	clientID := ctx.Get("X-Client-ID", "default")
+
+	// set the span attributes
+	span.SetAttributes(attribute.String("cid", cid))
+	span.SetAttributes(attribute.String("clientId", clientID))
 
 	// fetch MPD file from IPFS
 	mpd, err := a.IPFS.Get(cid)
@@ -49,12 +59,21 @@ func (a *API) listContents(ctx *fiber.Ctx) error {
 
 // streamContent handles the streaming of content over DASH
 func (a *API) streamContent(ctx *fiber.Ctx) error {
+	// start the tracing span
+	_, span := a.Tracer.Start(ctx.Context(), ctx.Path(), trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
 	// get the cid and segment from the URL
 	cid := ctx.Params("cid")
 	seg := ctx.Params("seg")
 
 	// get clientId from the request header
 	clientId := ctx.Get("X-Client-ID", "default")
+
+	// set the span attributes
+	span.SetAttributes(attribute.String("cid", cid))
+	span.SetAttributes(attribute.String("clientId", clientId))
+	span.SetAttributes(attribute.String("seg", seg))
 
 	// build the filename and cache key
 	filename := fmt.Sprintf("chunk%s.m4s", seg)
@@ -65,11 +84,19 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 
 // streamInit handles the streaming of the init segment
 func (a *API) streamInit(ctx *fiber.Ctx) error {
+	// start the tracing span
+	_, span := a.Tracer.Start(ctx.Context(), ctx.Path(), trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
 	// get the cid from the URL
 	cid := ctx.Params("cid")
 
 	// get clientId from the request header
 	clientId := ctx.Get("X-Client-ID", "default")
+
+	// set the span attributes
+	span.SetAttributes(attribute.String("cid", cid))
+	span.SetAttributes(attribute.String("clientId", clientId))
 
 	// TODO: handle multiple bitrate + use dynamic init files per quality level (Multi-client evaluation / prefetching)
 

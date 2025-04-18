@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -16,6 +18,10 @@ func (a *API) serveFile(
 	cacheKey,
 	clientId string,
 ) error {
+	// start the tracing span
+	_, span := a.Tracer.Start(ctx.Context(), ctx.Path(), trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
 	var cached bool
 
 	// check if the segment is cached
@@ -29,6 +35,14 @@ func (a *API) serveFile(
 		a.Logr.Info("cache hit", zap.String("cid", cid), zap.String("filename", filename))
 		a.Metrics.CacheHits.Inc()
 	}
+
+	// set the span attributes
+	span.SetAttributes(
+		attribute.String("cid", cid),
+		attribute.String("filename", filename),
+		attribute.String("clientId", clientId),
+		attribute.Bool("cached", cached),
+	)
 
 	// calculate cache ratio
 	total := float64(a.Cache.GetHitCounts() + a.Cache.GetMissCounts())
