@@ -43,7 +43,7 @@ func (e *Estimator) RecordDownload(clientID string, size int, duration time.Dura
 		est.Uncached = est.Alpha*est.Uncached + (1-est.Alpha)*bw
 	}
 
-	// Blend CurBW based on ratio (could be adjusted later)
+	// blend CurBW based on ratio (could be adjusted later)
 	est.CurBW = (est.Cached + est.Uncached) / 2
 }
 
@@ -55,6 +55,7 @@ func (e *Estimator) GetBandwidth(clientID string) float64 {
 	if est, ok := e.clients[clientID]; ok {
 		return est.CurBW
 	}
+
 	return 0.0
 }
 
@@ -66,6 +67,7 @@ func (e *Estimator) GetCurBW(clientID string) float64 {
 	if est, ok := e.clients[clientID]; ok {
 		return est.CurBW
 	}
+
 	return 0
 }
 
@@ -74,9 +76,11 @@ func (e *Estimator) GetCurBW(clientID string) float64 {
 func (e *Estimator) GetUncached(clientID string) float64 {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
+
 	if est, ok := e.clients[clientID]; ok {
 		return est.Uncached
 	}
+
 	return 0
 }
 
@@ -85,8 +89,10 @@ func (e *Estimator) GetUncached(clientID string) float64 {
 func (e *Estimator) GetCached(clientID string) float64 {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
+
 	if est, ok := e.clients[clientID]; ok {
 		return est.Cached
 	}
+
 	return 0
 }

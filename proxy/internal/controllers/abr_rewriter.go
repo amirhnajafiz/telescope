@@ -27,7 +27,7 @@ func NewAbrRewriter(cache *cache.Cache, logr *zap.Logger) *AbrRewriter {
 
 // RewriteMPD rewrites the MPD file based on the current bandwidth and cache status
 func (p *AbrRewriter) RewriteMPD(original []byte, clientID string, cid string) ([]byte, error) {
-	p.Logr.Info("Rewriting MPD", zap.String("clientID", clientID), zap.String("cid", cid))
+	p.Logr.Info("rewriting MPD", zap.String("clientId", clientID), zap.String("cid", cid))
 
 	tree := new(mpd.MPD)
 	if err := tree.Decode(original); err != nil {
@@ -43,7 +43,7 @@ func (p *AbrRewriter) RewriteMPD(original []byte, clientID string, cid string) (
 
 	for _, period := range tree.Period {
 		for _, adapt := range period.AdaptationSets {
-			// Rewrite SegmentTemplate paths
+			// rewrite SegmentTemplate paths
 			if adapt.SegmentTemplate != nil {
 				adapt.SegmentTemplate.Media = &mediaPath
 				adapt.SegmentTemplate.Initialization = &initPath
