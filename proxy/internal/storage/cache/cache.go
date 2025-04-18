@@ -1,40 +1,39 @@
 package cache
 
-import "sync"
+import (
+	"fmt"
 
-// SegmentCache holds a thread-safe in-memory record of cached segment CIDs.
-type SegmentCache struct {
-	data map[string]bool
-	mu   sync.RWMutex
+	"github.com/amirhnajafiz/telescope/pkg/files"
+)
+
+// Cache is an interface for our cache system to store segment records by CID
+type Cache struct {
+	baseDir string
 }
 
 // NewCache creates a new cache instance
-func NewCache() *SegmentCache {
-	return &SegmentCache{
-		data: make(map[string]bool),
+func NewCache(bd string) *Cache {
+	return &Cache{
+		baseDir: bd,
 	}
 }
 
-// IsCached returns true if the given CID is already cached.
-func (c *SegmentCache) IsCached(cid string) bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	return c.data[cid]
+// Store stores the data in the cache under the given CID
+func (c *Cache) Store(cid string, data []byte) error {
+	return files.Write(fmt.Sprintf("%s/%s", c.baseDir, cid), data)
 }
 
-// MarkCached marks a CID as cached.
-func (c *SegmentCache) MarkCached(cid string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+// Retrieve retrieves the data from the cache, if it does not exist, it returns an error
+func (c *Cache) Retrieve(cid string) ([]byte, error) {
+	path := fmt.Sprintf("%s/%s", c.baseDir, cid)
+	if !files.Exists(path) {
+		return nil, fmt.Errorf("file %s does not exist", cid)
+	}
 
-	c.data[cid] = true
+	return files.Read(path)
 }
 
-// Size returns the number of currently cached items.
-func (c *SegmentCache) Size() int {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	return len(c.data)
+// Size returns the number of files in the cache directory
+func (c *Cache) Size() (int, error) {
+	return files.CountInDir(c.baseDir)
 }
