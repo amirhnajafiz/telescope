@@ -39,7 +39,7 @@ func (a *API) serveFile(
 
 	// fetch the segment from IPFS if not cached
 	start := time.Now()
-	if segment == nil {
+	if !cached {
 		segment, err = a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
 		if err != nil {
 			a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), ctx.Path()).Inc()
@@ -61,6 +61,10 @@ func (a *API) serveFile(
 				zap.Error(err),
 			)
 		}
+
+		a.Metrics.LocalStorageSize.Add(float64(len(segment)))
+		a.Metrics.Bandwidth.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment) / int(duration.Seconds())))
+		a.Metrics.RoundTripTime.WithLabelValues(ctx.Method(), ctx.Path()).Observe(duration.Seconds())
 	}
 
 	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment)))
