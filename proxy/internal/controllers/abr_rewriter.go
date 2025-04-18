@@ -1,20 +1,20 @@
-package abr
+package controllers
 
 import (
 	"fmt"
 	"log"
 
-	"github.com/amirhnajafiz/telescope/internal/cache"
-	"github.com/amirhnajafiz/telescope/internal/throughput"
+	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+
 	"github.com/hare1039/go-mpd"
 )
 
-type CacheBasedPolicy struct {
-	Estimator *throughput.Estimator
-	Cache     *cache.SegmentCache
+type AbrRewriter struct {
+	Estimator *Estimator
+	Cache     *cache.Cache
 }
 
-func (p *CacheBasedPolicy) RewriteMPD(original []byte, clientID string, cid string) ([]byte, error) {
+func (p *AbrRewriter) RewriteMPD(original []byte, clientID string, cid string) ([]byte, error) {
 	log.Printf("Rewriting MPD for client %s with CID %s", clientID, cid)
 
 	tree := new(mpd.MPD)
@@ -46,8 +46,7 @@ func (p *CacheBasedPolicy) RewriteMPD(original []byte, clientID string, cid stri
 				bw := float64(*rep.Bandwidth)
 
 				var adjustment float64
-
-				if p.Cache.IsCached(*rep.ID) {
+				if _, err := p.Cache.Retrieve(*rep.ID); err == nil {
 					adjustment = Tc - Tg
 				} else {
 					adjustment = Tc - Tn
