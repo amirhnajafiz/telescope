@@ -1,13 +1,10 @@
 package api
 
 import (
-	"sync/atomic"
-
-	"github.com/amirhnajafiz/telescope/internal/abr"
-	"github.com/amirhnajafiz/telescope/internal/cache"
-	"github.com/amirhnajafiz/telescope/internal/ipfs"
+	"github.com/amirhnajafiz/telescope/internal/controllers"
+	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
 	"github.com/amirhnajafiz/telescope/internal/telemetry/metrics"
-	"github.com/amirhnajafiz/telescope/internal/throughput"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -18,15 +15,12 @@ import (
 
 // API struct holds endpoint functions of the proxy server
 type API struct {
-	Logr           *zap.Logger
-	Metrics        *metrics.Metrics
-	Tracer         trace.Tracer
-	IPFS           ipfs.Client
-	ABR            abr.CacheBasedPolicy
-	Cache          *cache.SegmentCache
-	CacheHitCount  atomic.Uint64
-	CacheMissCount atomic.Uint64
-	Estimator      *throughput.Estimator
+	Logr        *zap.Logger
+	Metrics     *metrics.Metrics
+	Tracer      trace.Tracer
+	IPFS        ipfs.Client
+	Cache       *cache.Cache
+	ABRRewriter controllers.AbrRewriter
 }
 
 // Register method takes a fiber.App instance and defines all the endpoints
