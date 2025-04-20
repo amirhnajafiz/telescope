@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"    # UI
+      - "6831:6831/udp"  # Thrift over UDP
+      - "14268:14268"    # HTTP collector
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+      - COLLECTOR_OTLP_ENABLED=true
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./services/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090" # Prometheus UI
+
+  ipfs0:
+    image: ipfs/go-ipfs:latest
+    ports:
+      - "5001:5001"
+      - "4001:4001"
+      - "8080:8080"
+    volumes:
+      - ipfs0_staging:/export
+      - ipfs0_data:/data/ipfs
+      - ./services/swarm.key:/data/ipfs/swarm.key
+    command: daemon --enable-pubsub-experiment
+
+  ipfs1:
+    image: ipfs/go-ipfs:latest
+    ports:
+      - "5002:5001"
+      - "4002:4001"
+      - "8081:8080"
+    volumes:
+      - ipfs1_staging:/export
+      - ipfs1_data:/data/ipfs
+      - ./services/swarm.key:/data/ipfs/swarm.key
+    command: daemon --enable-pubsub-experiment
+
+  ipfs2:
+    image: ipfs/go-ipfs:latest
+    ports:
+      - "5003:5001"
+      - "4003:4001"
+      - "8082:8080"
+    volumes:
+      - ipfs2_staging:/export
+      - ipfs2_data:/data/ipfs
+      - ./services/swarm.key:/data/ipfs/swarm.key
+    command: daemon --enable-pubsub-experiment
+
+volumes:
+  ipfs0_staging:
+  ipfs0_data:
+  ipfs1_staging:
+  ipfs1_data:
+  ipfs2_staging:
+  ipfs2_data:
