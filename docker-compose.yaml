@@ -1,6 +1,17 @@
 version: '3.9'
 
 services:
+  telescope:
+    build:
+      context: proxy
+      dockerfile: build/Dockerfile
+    ports:
+      - "8080:8080" # HTTP
+      - "8081:8081" # metrics
+    volumes:
+      - proxydata:/usr/local/bin/app/tmp
+      - ./services/.proxy.env:/usr/local/bin/app/.env
+
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
@@ -55,6 +66,7 @@ services:
     command: daemon --enable-pubsub-experiment
 
 volumes:
+  proxydata:
   ipfs0_staging:
   ipfs0_data:
   ipfs1_staging:

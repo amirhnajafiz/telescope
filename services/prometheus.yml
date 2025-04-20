@@ -2,6 +2,9 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
+  - job_name: 'telescope'
+    static_configs:
+      - targets: ['telescope:8081']
   - job_name: 'jaeger'
     static_configs:
       - targets: ['jaeger:16686']
