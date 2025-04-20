@@ -5,6 +5,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+const (
+	Namespace = "telescope"
+	Subsystem = "proxy"
+)
+
 // Metrics holds all the Prometheus metrics used in the application
 type Metrics struct {
 	RoundTripTime    *prometheus.HistogramVec
@@ -21,36 +26,52 @@ type Metrics struct {
 func NewMetrics() *Metrics {
 	return &Metrics{
 		RoundTripTime: promauto.NewHistogramVec(prometheus.HistogramOpts{
-			Name: "round_trip_time_seconds",
-			Help: "Round trip time in seconds.",
+			Name:      "round_trip_time_seconds",
+			Help:      "Round trip time in seconds.",
+			Namespace: Namespace,
+			Subsystem: Subsystem,
 		}, []string{"method", "endpoint"}),
 		Bandwidth: promauto.NewCounterVec(prometheus.CounterOpts{
-			Name: "bandwidth_bytes",
-			Help: "Bandwidth usage in bytes.",
+			Name:      "bandwidth_bytes",
+			Help:      "Bandwidth usage in bytes.",
+			Namespace: Namespace,
+			Subsystem: Subsystem,
 		}, []string{"method", "endpoint"}),
 		CacheHits: promauto.NewCounter(prometheus.CounterOpts{
-			Name: "cache_hits",
-			Help: "Number of cache hits.",
+			Name:      "cache_hits",
+			Help:      "Number of cache hits.",
+			Namespace: Namespace,
+			Subsystem: Subsystem,
 		}),
 		CacheMisses: promauto.NewCounter(prometheus.CounterOpts{
-			Name: "cache_misses",
-			Help: "Number of cache misses.",
+			Name:      "cache_misses",
+			Help:      "Number of cache misses.",
+			Namespace: Namespace,
+			Subsystem: Subsystem,
 		}),
 		CacheRatio: promauto.NewGauge(prometheus.GaugeOpts{
-			Name: "cache_ratio",
-			Help: "Cache hit ratio.",
+			Name:      "cache_ratio",
+			Help:      "Cache hit ratio.",
+			Namespace: Namespace,
+			Subsystem: Subsystem,
 		}),
 		LocalStorageSize: promauto.NewGauge(prometheus.GaugeOpts{
-			Name: "local_storage_size_bytes",
-			Help: "Local storage size in bytes.",
+			Name:      "local_storage_size_bytes",
+			Help:      "Local storage size in bytes.",
+			Namespace: Namespace,
+			Subsystem: Subsystem,
 		}),
 		ErrorCount: promauto.NewCounterVec(prometheus.CounterOpts{
-			Name: "error_count",
-			Help: "Number of errors.",
+			Name:      "error_count",
+			Help:      "Number of errors.",
+			Namespace: Namespace,
+			Subsystem: Subsystem,
 		}, []string{"method", "endpoint"}),
 		BytesTransferred: promauto.NewCounterVec(prometheus.CounterOpts{
-			Name: "bytes_transferred",
-			Help: "Total bytes transferred.",
+			Name:      "bytes_transferred",
+			Help:      "Total bytes transferred.",
+			Namespace: Namespace,
+			Subsystem: Subsystem,
 		}, []string{"method", "endpoint"}),
 	}
 }
