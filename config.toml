@@ -1,0 +1,9 @@
+[dependencies]
+# Install MP4Box
+mp4box = { source = "https://gpac.wp.imt.fr/downloads/" }
+
+# Install Docker
+docker = { source = "https://docs.docker.com/get-docker/" }
+
+# Install Docker Compose
+docker_compose = { source = "https://docs.docker.com/compose/install/" }
