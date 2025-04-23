@@ -14,7 +14,9 @@ main
 main~
 
 # Config files
-config
+config.yml
+config.yaml
+config.json
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
