@@ -3,7 +3,8 @@ package config
 // Default returns the default configuration for the application
 func Default() *Config {
 	return &Config{
-		IDP:         "tmp/telescope_idp",
+		DataPath:    "bp/data.txt",
+		IDP:         "bp/telescope_idp",
 		IPFSGateway: "http://localhost:8080/ipfs/",
 	}
 }
