@@ -6,8 +6,8 @@ services:
       context: proxy
       dockerfile: build/Dockerfile
     ports:
-      - "5050:5050" # HTTP
-      - "5051:5051" # metrics
+      - "5050:8080" # HTTP
+      - "5051:9090" # metrics
     volumes:
       - proxydata:/usr/local/bin/app/tmp
       - ./services/.proxy.env:/usr/local/bin/app/.env
