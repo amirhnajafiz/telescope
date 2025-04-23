@@ -3,6 +3,8 @@ package api
 import (
 	"fmt"
 
+	"github.com/amirhnajafiz/telescope/pkg/parser"
+
 	"github.com/gofiber/fiber/v2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -35,14 +37,17 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
 
+	// get the header map from the request
+	headerMap := ctx.Locals("headerMap").(map[string]float64)
+
 	// rewrite MPD via ABR policy
 	rewritten, err := a.ABRRewriter.RewriteMPD(
 		mpd,
 		clientID,
 		cid,
-		ctx.Locals("XSC").(float64),
-		ctx.Locals("XSU").(float64),
-		ctx.Locals("XSCB").(float64),
+		headerMap["cached"],
+		headerMap["uncached"],
+		headerMap["current"],
 	)
 	if err != nil {
 		a.Logr.Error("failed to rewrite mpd", zap.String("cid", cid), zap.Error(err))
@@ -55,9 +60,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(rewritten)))
 
 	ctx.Set("Content-Type", "application/dash+xml")
-	ctx.Set("X-Server-Cached", ctx.Locals("XSC").(string))
-	ctx.Set("X-Server-Uncached", ctx.Locals("XSU").(string))
-	ctx.Set("X-Server-Current-Bandwidth", ctx.Locals("XSCB").(string))
+	ctx.Set("X-Server-BW", parser.ParseMapToHeader(headerMap))
 
 	return ctx.Send(rewritten)
 }

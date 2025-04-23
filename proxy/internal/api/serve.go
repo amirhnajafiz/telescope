@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/amirhnajafiz/telescope/pkg/estimator"
+	"github.com/amirhnajafiz/telescope/pkg/parser"
+
 	"github.com/gofiber/fiber/v2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -63,15 +65,23 @@ func (a *API) serveFile(
 	}
 	duration := time.Since(start)
 
+	// get the header map from the request
+	headerMap := ctx.Locals("headerMap").(map[string]float64)
+
 	// record the download in the ABR rewriter
 	xsb, xsc, xsu := estimator.Estimate(
 		len(segment),
 		duration,
 		cached,
-		ctx.Locals("XSC").(float64),
-		ctx.Locals("XSU").(float64),
-		ctx.Locals("XSCB").(float64),
+		headerMap["cached"],
+		headerMap["uncached"],
+		headerMap["current"],
 	)
+
+	// update the header map
+	headerMap["cached"] = xsc
+	headerMap["uncached"] = xsu
+	headerMap["current"] = xsb
 
 	// cache the segment
 	if !cached {
@@ -92,9 +102,7 @@ func (a *API) serveFile(
 	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment)))
 
 	ctx.Set("Content-Type", "video/mp4")
-	ctx.Set("X-Server-Cached", fmt.Sprintf("%f", xsc))
-	ctx.Set("X-Server-Uncached", fmt.Sprintf("%f", xsu))
-	ctx.Set("X-Server-Current-Bandwidth", fmt.Sprintf("%f", xsb))
+	ctx.Set("X-Server-BW", parser.ParseMapToHeader(headerMap))
 
 	return ctx.Send(segment)
 }
