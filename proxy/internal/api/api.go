@@ -51,7 +51,4 @@ func (a *API) Register(app *fiber.App) {
 	contents.Get("/:cid", a.getContent)
 	contents.Get("/:cid/init/stream", a.streamInit)
 	contents.Get("/:cid/:seg/stream", a.streamContent)
-
-	app.Static("/videos", "../assets")
-	app.Static("/", "../client")
 }
