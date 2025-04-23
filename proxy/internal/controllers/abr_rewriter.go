@@ -26,7 +26,11 @@ func NewAbrRewriter(cache *cache.Cache, logr *zap.Logger) *AbrRewriter {
 }
 
 // RewriteMPD rewrites the MPD file based on the current bandwidth and cache status
-func (p *AbrRewriter) RewriteMPD(original []byte, clientID string, cid string) ([]byte, error) {
+func (p *AbrRewriter) RewriteMPD(
+	original []byte,
+	clientID string,
+	cid string,
+) ([]byte, error) {
 	p.Logr.Info("rewriting MPD", zap.String("clientId", clientID), zap.String("cid", cid))
 
 	tree := new(mpd.MPD)
