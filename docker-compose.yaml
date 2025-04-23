@@ -30,40 +30,49 @@ services:
       - "9090:9090" # Prometheus UI
 
   ipfs0:
-    image: ipfs/go-ipfs:latest
+    image: ipfs/kubo:latest
     ports:
-      - "5001:5001"
       - "4001:4001"
+      - "4001:4001/udp"
       - "8080:8080"
+      - "5001:5001"
     volumes:
       - ipfs0_staging:/export
       - ipfs0_data:/data/ipfs
       - ./services/swarm.key:/data/ipfs/swarm.key
     command: daemon --enable-pubsub-experiment
+    environment:
+      - IPFS_PROFILE=server
 
   ipfs1:
-    image: ipfs/go-ipfs:latest
+    image: ipfs/kubo:latest
     ports:
-      - "5002:5001"
       - "4002:4001"
+      - "4002:4001/udp"
       - "8081:8080"
+      - "5002:5001"
     volumes:
       - ipfs1_staging:/export
       - ipfs1_data:/data/ipfs
       - ./services/swarm.key:/data/ipfs/swarm.key
     command: daemon --enable-pubsub-experiment
+    environment:
+      - IPFS_PROFILE=server
 
   ipfs2:
-    image: ipfs/go-ipfs:latest
+    image: ipfs/kubo:latest
     ports:
-      - "5003:5001"
       - "4003:4001"
+      - "4003:4001/udp"
       - "8082:8080"
+      - "5002:5001"
     volumes:
       - ipfs2_staging:/export
       - ipfs2_data:/data/ipfs
       - ./services/swarm.key:/data/ipfs/swarm.key
     command: daemon --enable-pubsub-experiment
+    environment:
+      - IPFS_PROFILE=server
 
 volumes:
   proxydata:
