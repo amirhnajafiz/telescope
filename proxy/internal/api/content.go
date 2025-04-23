@@ -55,6 +55,9 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(rewritten)))
 
 	ctx.Set("Content-Type", "application/dash+xml")
+	ctx.Set("X-Server-Cached", ctx.Locals("XSC").(string))
+	ctx.Set("X-Server-Uncached", ctx.Locals("XSU").(string))
+	ctx.Set("X-Server-Current-Bandwidth", ctx.Locals("XSCB").(string))
 
 	return ctx.Send(rewritten)
 }

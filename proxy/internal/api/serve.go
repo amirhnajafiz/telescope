@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/amirhnajafiz/telescope/pkg/estimator"
 	"github.com/gofiber/fiber/v2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -63,7 +64,14 @@ func (a *API) serveFile(
 	duration := time.Since(start)
 
 	// record the download in the ABR rewriter
-	a.ABRRewriter.Estimator.RecordDownload(clientId, len(segment), duration, cached)
+	xsb, xsc, xsu := estimator.Estimate(
+		len(segment),
+		duration,
+		cached,
+		ctx.Locals("XSC").(float64),
+		ctx.Locals("XSU").(float64),
+		ctx.Locals("XSCB").(float64),
+	)
 
 	// cache the segment
 	if !cached {
@@ -84,6 +92,9 @@ func (a *API) serveFile(
 	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment)))
 
 	ctx.Set("Content-Type", "video/mp4")
+	ctx.Set("X-Server-Cached", fmt.Sprintf("%f", xsc))
+	ctx.Set("X-Server-Uncached", fmt.Sprintf("%f", xsu))
+	ctx.Set("X-Server-Current-Bandwidth", fmt.Sprintf("%f", xsb))
 
 	return ctx.Send(segment)
 }
