@@ -44,10 +44,9 @@ func (a *API) Register(app *fiber.App) {
 	}))
 
 	// create API groups
-	contents := app.Group("/api/contents")
+	contents := app.Group("/api")
 
 	// define the contents endpoints
-	contents.Get("/", a.listContents)
 	contents.Get("/:cid", a.getContent)
 	contents.Get("/:cid/init/stream", a.streamInit)
 	contents.Get("/:cid/:seg/stream", a.streamContent)

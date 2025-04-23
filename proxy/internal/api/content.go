@@ -52,11 +52,6 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	return ctx.Send(rewritten)
 }
 
-// listContents handles the listing of all contents
-func (a *API) listContents(ctx *fiber.Ctx) error {
-	return nil
-}
-
 // streamContent handles the streaming of content over DASH
 func (a *API) streamContent(ctx *fiber.Ctx) error {
 	// start the tracing span
