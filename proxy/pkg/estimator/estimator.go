@@ -14,6 +14,14 @@ func Estimate(
 ) (float64, float64, float64) {
 	bw := float64(size*8) / duration.Seconds() // bits/sec
 
+	// set default values if curBW is 0
+	if curBW == 0 {
+		alpha = 0.5     // default value
+		cachedBW = bw   // default value
+		uncachedBW = bw // default value
+		curBW = bw      // default value
+	}
+
 	if cached {
 		cachedBW = alpha*cachedBW + (1-alpha)*bw
 	} else {

@@ -11,17 +11,15 @@ import (
 
 // AbrRewriter is a structure that rewrites the MPD file based on the current bandwidth
 type AbrRewriter struct {
-	Cache     *cache.Cache
-	Estimator *Estimator
-	Logr      *zap.Logger
+	Cache *cache.Cache
+	Logr  *zap.Logger
 }
 
 // NewAbrRewriter creates a new instance of AbrRewriter
 func NewAbrRewriter(cache *cache.Cache, logr *zap.Logger) *AbrRewriter {
 	return &AbrRewriter{
-		Estimator: NewEstimator(),
-		Cache:     cache,
-		Logr:      logr,
+		Cache: cache,
+		Logr:  logr,
 	}
 }
 
@@ -30,6 +28,9 @@ func (p *AbrRewriter) RewriteMPD(
 	original []byte,
 	clientID string,
 	cid string,
+	curBW,
+	cachedBW,
+	uncachedBW float64,
 ) ([]byte, error) {
 	p.Logr.Info("rewriting MPD", zap.String("clientId", clientID), zap.String("cid", cid))
 
@@ -38,9 +39,9 @@ func (p *AbrRewriter) RewriteMPD(
 		return nil, err
 	}
 
-	Tc := p.Estimator.GetCurBW(clientID)
-	Tg := p.Estimator.GetCached(clientID)
-	Tn := p.Estimator.GetUncached(clientID)
+	Tc := curBW
+	Tg := cachedBW
+	Tn := uncachedBW
 
 	initPath := fmt.Sprintf("/api/contents/%s/init/stream", cid)
 	mediaPath := fmt.Sprintf("/api/contents/%s/$Number$/stream", cid)
