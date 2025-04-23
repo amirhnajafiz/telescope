@@ -82,7 +82,7 @@ services:
       - "4003:4001"
       - "4003:4001/udp"
       - "8082:8080"
-      - "5002:5001"
+      - "5003:5001"
     volumes:
       - ipfs2_staging:/export
       - ipfs2_data:/data/ipfs

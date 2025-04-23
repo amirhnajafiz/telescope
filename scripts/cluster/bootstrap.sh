@@ -5,9 +5,9 @@
 # function to get the node ID and multiaddresses of a given IPFS container
 get_node_info() {
     local container_name=$1
-    local node_info=$(docker exec "$container_name" ipfs id)
+    local node_info=$(docker exec telescope-"$container_name"-1 ipfs id)
     local node_id=$(echo "$node_info" | jq -r '.ID')
-    local node_addresses=$(echo "$node_info" | jq -r '.Addresses[]' | grep -v '127.0.0.1')
+    local node_addresses=$(echo "$node_info" | jq -r '.Addresses[]' | grep -v '127.0.0.1' | grep '^/ip4' | head -n 1)
     echo "$node_id" "$node_addresses"
 }
 
@@ -16,7 +16,7 @@ connect_nodes() {
     local source_container=$1
     local target_address=$2
     local target_id=$3
-    docker exec "$source_container" ipfs swarm connect "$target_address/p2p/$target_id"
+    docker exec telescope-"$source_container"-1 ipfs swarm connect "$target_address/p2p/$target_id"
 }
 
 # get node info for ipfs0, ipfs1, and ipfs2
