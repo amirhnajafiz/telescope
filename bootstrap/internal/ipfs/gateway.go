@@ -1,8 +1,6 @@
 package ipfs
 
 import (
-	"fmt"
-
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
@@ -19,7 +17,7 @@ func (g *gateway) PutDIR(path string) (string, error) {
 	// upload the directory
 	cid, err := sh.AddDir(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to upload directory: %w", err)
+		return "", err
 	}
 
 	return cid, nil

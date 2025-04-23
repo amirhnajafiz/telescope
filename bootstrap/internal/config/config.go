@@ -11,7 +11,7 @@ import (
 type Config struct {
 	DataPath    string `env:"TELESCOPE_BTS_DATA_PATH" envDefault:"bp/data.txt"`
 	IDP         string `env:"TELESCOPE_BTS_IDP" envDefault:"bp/telescope_idp"`
-	IPFSGateway string `env:"TELESCOPE_BTS_IPFS_GATEWAY" envDefault:"http://localhost:8080/ipfs/"`
+	IPFSGateway string `env:"TELESCOPE_BTS_IPFS_GATEWAY" envDefault:"http://localhost:8080"`
 }
 
 // LoadConfigs loads the configuration from environment variables
