@@ -64,11 +64,7 @@ func (p *AbrRewriter) RewriteMPD(original []byte, clientID string, cid string) (
 					adjustment = Tc - Tn
 				}
 
-				newBw := bw + adjustment
-				if newBw < 1 {
-					newBw = 1
-				}
-
+				newBw := max(bw+adjustment, 1)
 				tmp := uint64(newBw)
 				rep.Bandwidth = &tmp
 			}
