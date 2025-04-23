@@ -24,12 +24,24 @@ func main() {
 		panic(err)
 	}
 
+	// open the bootstrap data file
+	file, err := os.OpenFile(cfg.DataPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
 	// iterate over directories and upload them to IPFS
 	for _, dir := range dirs {
 		if cid, err := ipfsC.PutDIR(dir.Name()); err != nil {
 			log.Printf("failed to upload %s: %v", dir.Name(), err)
 		} else {
 			log.Printf("uploaded %s to IPFS with CID: %s", dir.Name(), cid)
+
+			// write the CID to the bootstrap data file
+			if _, err := file.WriteString(dir.Name() + ": " + cid + "\n"); err != nil {
+				log.Printf("failed to write to file: %v", err)
+			}
 		}
 	}
 }
