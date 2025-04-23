@@ -2,12 +2,15 @@ package estimator
 
 import "time"
 
+const (
+	alpha = 0.5 // default value for alpha
+)
+
 // Estimate updates the throughput estimate for a client based on the size of the downloaded content, duration of the download, and whether it was cached or not
 func Estimate(
 	size int,
 	duration time.Duration,
 	cached bool,
-	alpha,
 	cachedBW,
 	uncachedBW,
 	curBW float64,
@@ -16,7 +19,6 @@ func Estimate(
 
 	// set default values if curBW is 0
 	if curBW == 0 {
-		alpha = 0.5     // default value
 		cachedBW = bw   // default value
 		uncachedBW = bw // default value
 		curBW = bw      // default value

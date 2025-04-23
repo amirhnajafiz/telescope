@@ -36,7 +36,14 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	}
 
 	// rewrite MPD via ABR policy
-	rewritten, err := a.ABRRewriter.RewriteMPD(mpd, clientID, cid)
+	rewritten, err := a.ABRRewriter.RewriteMPD(
+		mpd,
+		clientID,
+		cid,
+		ctx.Locals("XSC").(float64),
+		ctx.Locals("XSU").(float64),
+		ctx.Locals("XSCB").(float64),
+	)
 	if err != nil {
 		a.Logr.Error("failed to rewrite mpd", zap.String("cid", cid), zap.Error(err))
 
