@@ -7,8 +7,8 @@ services:
       dockerfile: build/Dockerfile
     volumes:
       - ./services/.bootstrap.env:/usr/local/bin/app/.env
-      - ./bp/data.txt:/usr/local/bin/app/tmp/data.txt # output CIDs will be here
-      - ./bp/idp:/usr/local/bin/app/tmp/idp           # input video directories should be here
+      - ./bp/data.txt:/usr/local/bin/app/tmp/data.txt # output CIDs will be here (bp/data.txt)
+      - ./bp/idp:/usr/local/bin/app/tmp/idp           # input video directories should be here (bp/idp)
 
   telescope:
     build:
