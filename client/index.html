@@ -38,9 +38,11 @@
     const mpdUrl = `/videos/bunny.mpd`;
 
     const player = dashjs.MediaPlayer().create();
-    const video = document.querySelector("#videoPlayer")
+    const video = document.querySelector("#videoPlayer");
     player.initialize(video, mpdUrl, true);
     video.play();
+
+    let xHeaders = {}; // Object to store X-headers from server responses
 
     player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
       document.getElementById('log').innerText = `Client ID: ${clientID}`;
@@ -62,11 +64,30 @@
       console.log(`📊 Buffer level: ${e.bufferLevel.toFixed(2)}s`);
     });
 
-    // Attach client ID to all outgoing requests
+    // Capture X-headers from server responses
     player.extend("RequestModifier", () => ({
       modifyRequestHeader: function (xhr) {
+        // Attach client ID to all outgoing requests
         xhr.setRequestHeader("X-Client-ID", clientID);
+
+        // Attach captured X-headers to outgoing requests
+        for (const [key, value] of Object.entries(xHeaders)) {
+          xhr.setRequestHeader(key, value);
+        }
+
         return xhr;
+      },
+      modifyRequestResponse: function (xhr) {
+        // Capture X-headers from the server response
+        const headers = xhr.getAllResponseHeaders().split("\r\n");
+        headers.forEach(header => {
+          const [key, value] = header.split(": ");
+          if (key && key.startsWith("X-Server-")) {
+            xHeaders[key] = value;
+          }
+        });
+
+        return xhr.response;
       }
     }), true);
   </script>
