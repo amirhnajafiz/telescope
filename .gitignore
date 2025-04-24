@@ -36,3 +36,4 @@ go.work.sum
 *.m4s
 *.mpd
 *.mp4
+tmp/
