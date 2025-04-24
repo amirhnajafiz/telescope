@@ -16,7 +16,7 @@ import (
 // getContent handles the download of content, used for getting mpd files
 func (a *API) getContent(ctx *fiber.Ctx) error {
 	// start the tracing span
-	_, span := a.Tracer.Start(ctx.Context(), ctx.Path(), trace.WithSpanKind(trace.SpanKindServer))
+	_, span := a.Tracer.Start(ctx.Context(), "/api/content", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
 	// get the cid from the URL
@@ -34,7 +34,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	if err != nil {
 		a.Logr.Error("failed to fetch mpd", zap.String("cid", cid), zap.Error(err))
 
-		a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), ctx.Path()).Inc()
+		a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), "/api/content").Inc()
 
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
@@ -54,12 +54,12 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	if err != nil {
 		a.Logr.Error("failed to rewrite mpd", zap.String("cid", cid), zap.Error(err))
 
-		a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), ctx.Path()).Inc()
+		a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), "/api/content").Inc()
 
 		return ctx.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("failed to rewrite manifest:\n %s", err))
 	}
 
-	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(rewritten)))
+	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), "/api/content").Add(float64(len(rewritten)))
 
 	ctx.Set("Content-Type", "application/dash+xml")
 	ctx.Set("X-Server-BW", parser.ParseMapToHeader(headerMap))
@@ -70,7 +70,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 // streamContent handles the streaming of content over DASH
 func (a *API) streamContent(ctx *fiber.Ctx) error {
 	// start the tracing span
-	_, span := a.Tracer.Start(ctx.Context(), ctx.Path(), trace.WithSpanKind(trace.SpanKindServer))
+	_, span := a.Tracer.Start(ctx.Context(), "/api/stream", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
 	// get the cid and segment from the URL
@@ -123,7 +123,7 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	if !cached {
 		segment, err = a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
 		if err != nil {
-			a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), ctx.Path()).Inc()
+			a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), "/api/stream").Inc()
 			return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
 		}
 	}
@@ -159,11 +159,11 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 		}
 
 		a.Metrics.LocalStorageSize.Add(float64(len(segment)))
-		a.Metrics.Bandwidth.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment) / int(duration.Microseconds())))
-		a.Metrics.RoundTripTime.WithLabelValues(ctx.Method(), ctx.Path()).Observe(float64(duration.Microseconds()))
+		a.Metrics.Bandwidth.WithLabelValues(ctx.Method(), "/api/stream").Add(float64(len(segment) / int(duration.Microseconds())))
+		a.Metrics.RoundTripTime.WithLabelValues(ctx.Method(), "/api/stream").Observe(float64(duration.Microseconds()))
 	}
 
-	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment)))
+	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), "/api/stream").Add(float64(len(segment)))
 
 	ctx.Set("Content-Type", "video/mp4")
 	ctx.Set("X-Server-BW", parser.ParseMapToHeader(headerMap))
