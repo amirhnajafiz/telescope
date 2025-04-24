@@ -15,7 +15,7 @@ func Estimate(
 	uncachedBW,
 	curBW float64,
 ) (float64, float64, float64) {
-	bw := float64(size*8) / duration.Seconds() // bits/sec
+	bw := float64(size*8000000) / float64(duration.Microseconds()) // bits/sec
 
 	// set default values if curBW is 0
 	if curBW == 0 {

@@ -95,8 +95,8 @@ func (a *API) serveFile(
 		}
 
 		a.Metrics.LocalStorageSize.Add(float64(len(segment)))
-		a.Metrics.Bandwidth.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment) / int(duration.Seconds())))
-		a.Metrics.RoundTripTime.WithLabelValues(ctx.Method(), ctx.Path()).Observe(duration.Seconds())
+		a.Metrics.Bandwidth.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment) / int(duration.Microseconds())))
+		a.Metrics.RoundTripTime.WithLabelValues(ctx.Method(), ctx.Path()).Observe(float64(duration.Microseconds()))
 	}
 
 	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), ctx.Path()).Add(float64(len(segment)))

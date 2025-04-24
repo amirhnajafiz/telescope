@@ -58,6 +58,5 @@ func (a *API) Register(app *fiber.App) {
 
 	// define the contents endpoints
 	contents.Get("/:cid", a.getContent)
-	contents.Get("/:cid/init", a.streamInit)
 	contents.Get("/:cid/stream/:seg", a.streamContent)
 }

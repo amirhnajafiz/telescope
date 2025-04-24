@@ -43,8 +43,8 @@ func (p *AbrRewriter) RewriteMPD(
 	Tg := cachedBW
 	Tn := uncachedBW
 
-	initPath := fmt.Sprintf("/api/contents/%s/init/stream", cid)
-	mediaPath := fmt.Sprintf("/api/contents/%s/$Number$/stream", cid)
+	initPath := fmt.Sprintf("/api/%s/stream/init-stream$RepresentationID$.m4s", cid)
+	mediaPath := fmt.Sprintf("/api/%s/stream/chunk-stream$RepresentationID$-$Number%%05d$.m4s", cid)
 
 	for _, period := range tree.Period {
 		for _, adapt := range period.AdaptationSets {

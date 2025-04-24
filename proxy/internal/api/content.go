@@ -28,7 +28,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	span.SetAttributes(attribute.String("clientId", clientID))
 
 	// fetch MPD file from IPFS
-	mpd, err := a.IPFS.Get(cid)
+	mpd, err := a.IPFS.Get(fmt.Sprintf("%s/stream.mpd", cid))
 	if err != nil {
 		a.Logr.Error("failed to fetch mpd", zap.String("cid", cid), zap.Error(err))
 
@@ -84,32 +84,7 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	span.SetAttributes(attribute.String("seg", seg))
 
 	// build the filename and cache key
-	filename := fmt.Sprintf("chunk%s.m4s", seg)
-	cacheKey := fmt.Sprintf("%s/%s", cid, filename)
-
-	return a.serveFile(ctx, cid, filename, cacheKey, clientId)
-}
-
-// streamInit handles the streaming of the init segment
-func (a *API) streamInit(ctx *fiber.Ctx) error {
-	// start the tracing span
-	_, span := a.Tracer.Start(ctx.Context(), ctx.Path(), trace.WithSpanKind(trace.SpanKindServer))
-	defer span.End()
-
-	// get the cid from the URL
-	cid := ctx.Params("cid")
-
-	// get clientId from the request header
-	clientId := ctx.Get("X-Client-ID", "default")
-
-	// set the span attributes
-	span.SetAttributes(attribute.String("cid", cid))
-	span.SetAttributes(attribute.String("clientId", clientId))
-
-	// TODO: handle multiple bitrate + use dynamic init files per quality level (Multi-client evaluation / prefetching)
-
-	// build the filename and cache key
-	filename := "init.mp4"
+	filename := seg
 	cacheKey := fmt.Sprintf("%s/%s", cid, filename)
 
 	return a.serveFile(ctx, cid, filename, cacheKey, clientId)
