@@ -23,8 +23,3 @@ func (m *mock) Get(cid string) ([]byte, error) {
 
 	return data, nil
 }
-
-// Put uploads data to IPFS and returns the CID
-func (m *mock) Put(_ []byte) (string, error) {
-	return "", nil
-}
