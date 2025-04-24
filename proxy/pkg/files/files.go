@@ -1,9 +1,18 @@
 package files
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+)
 
 // Write create a new file with the given path and content
 func Write(path string, content []byte) error {
+	// create directories in the path if they do not exist
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return err
+	}
+
 	// open the file for writing
 	file, err := os.Create(path)
 	if err != nil {
