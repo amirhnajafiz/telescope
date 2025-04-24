@@ -44,6 +44,11 @@ func (a *API) Register(app *fiber.App) {
 		},
 	}))
 
+	// create template rendering routes
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Render("index", fiber.Map{})
+	})
+
 	// create API groups
 	contents := app.Group("/api")
 

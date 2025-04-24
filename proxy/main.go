@@ -8,6 +8,7 @@ import (
 	"github.com/amirhnajafiz/telescope/internal/config"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/template/html/v2"
 )
 
 func main() {
@@ -17,8 +18,13 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	// build html engine
+	engine := html.New("./public", ".html")
+
 	// create a new fiber app
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		Views: engine,
+	})
 
 	// create a new API instance
 	apiInstance, err := cmd.RegisterAPI(cfg)
