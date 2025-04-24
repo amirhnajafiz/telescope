@@ -48,10 +48,11 @@ func (a *API) Register(app *fiber.App) {
 	contents := app.Group("/api")
 
 	// middleware to HTTP extract headers
+	contents.Use(middlewares.Prelog(a.Logr.Named("prelog")))
 	contents.Use(middlewares.ExtractHeaders)
 
 	// define the contents endpoints
 	contents.Get("/:cid", a.getContent)
-	contents.Get("/:cid/init/stream", a.streamInit)
-	contents.Get("/:cid/:seg/stream", a.streamContent)
+	contents.Get("/:cid/init", a.streamInit)
+	contents.Get("/:cid/stream/:seg", a.streamContent)
 }

@@ -8,7 +8,8 @@ type Client interface {
 
 // NewClient creates a new IPFS gateway instance
 func NewClient(gatewayURL string) Client {
-	return &gateway{
-		url: gatewayURL,
-	}
+	// return &gateway{
+	// 	url: gatewayURL,
+	// }
+	return &mock{}
 }
