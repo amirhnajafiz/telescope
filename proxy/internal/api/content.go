@@ -30,7 +30,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	span.SetAttributes(attribute.String("clientId", clientID))
 
 	// fetch MPD file from IPFS
-	mpd, _, err := a.IPFS.Get(fmt.Sprintf("%s/stream.mpd", cid))
+	mpd, rtt, err := a.IPFS.Get(fmt.Sprintf("%s/stream.mpd", cid))
 	if err != nil {
 		a.Logr.Error("failed to fetch mpd", zap.String("cid", cid), zap.Error(err))
 
@@ -38,6 +38,8 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
+
+	a.Metrics.RoundTripTime.WithLabelValues(ctx.Method(), "/api/content").Observe(float64(rtt))
 
 	// get the header map from the request
 	headerMap := ctx.Locals("headerMap").(map[string]float64)
