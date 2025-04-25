@@ -32,78 +32,74 @@
     <div id="log">Loading...</div>
 
     <script>
-      // generate a random client ID
       const clientID = Math.random().toString(36).substring(2, 8);
-      // the URL of the DASH manifest file
       const mpdUrl = `/api/output`;
 
-      // create a new DASH player instance
       const player = dashjs.MediaPlayer().create();
       const video = document.querySelector("#videoPlayer");
       player.initialize(video, mpdUrl, true);
       video.play();
 
-      // x-headers object to store captured headers
-      let xHeaders = {};
+      let xHeaders = {}; // Object to store X-headers from server responses
 
-      // Event listeners for player events
       player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
-        document.getElementById("log").innerText = `Client ID: ${clientID}`;
+        document.getElementById('log').innerText = `Client ID: ${clientID}`;
       });
 
-      player.on(
-        dashjs.MediaPlayer.events.FRAGMENT_LOADING_STARTED,
-        function (e) {
-          console.log("loading segment:", e.request.url);
-        }
-      );
+      player.on(dashjs.MediaPlayer.events.FRAGMENT_LOADING_STARTED, function (e) {
+        console.log("Loading segment:", e.request.url);
+      });
 
       player.on(dashjs.MediaPlayer.events.MANIFEST_LOADED, function (e) {
-        console.log("manifest event object:", e);
+        console.log("📜 Manifest event object:", e);
       });
 
-      player.on(
-        dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED,
-        function (e) {
-          console.log(
-            `quality changed: type=${e.mediaType}, new index=${e.newQuality}`
-          );
-        }
-      );
+      player.on(dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED, function (e) {
+        console.log(`🎚️ Quality changed: type=${e.mediaType}, new index=${e.newQuality}`);
+      });
 
       player.on(dashjs.MediaPlayer.events.BUFFER_LEVEL_UPDATED, (e) => {
-        console.log(`buffer level: ${e.bufferLevel.toFixed(2)}s`);
+        console.log(`📊 Buffer level: ${e.bufferLevel.toFixed(2)}s`);
       });
 
-      player.extend(
-        "RequestModifier",
-        () => ({
-          modifyRequestHeader: function (xhr) {
-            // attach client ID to all outgoing requests
-            xhr.setRequestHeader("X-Client-ID", clientID);
+      // Extend RequestModifier to send additional headers
+      player.extend("RequestModifier", () => ({
+        modifyRequestHeader: function (xhr) {
+          // Attach client ID to all outgoing requests
+          xhr.setRequestHeader("X-Client-ID", clientID);
 
-            // attach captured X-headers to outgoing requests
-            for (const [key, value] of Object.entries(xHeaders)) {
-              xhr.setRequestHeader(key, value);
+          // Attach captured X-headers to outgoing requests
+          for (const [key, value] of Object.entries(xHeaders)) {
+            xhr.setRequestHeader(key, value);
+          }
+
+          // Attach segment quality
+          const qualityIndex = player.getQualityFor("video");
+          xhr.setRequestHeader("X-Segment-Quality", qualityIndex);
+
+          // Attach bandwidth
+          const bandwidth = player.getAverageThroughput("video");
+          xhr.setRequestHeader("X-Bandwidth", bandwidth);
+
+          // Attach stall rate (buffer level)
+          const bufferLevel = player.getBufferLength("video");
+          xhr.setRequestHeader("X-Stall-Rate", bufferLevel);
+
+          return xhr;
+        },
+        modifyRequestResponse: function (xhr) {
+          // Capture X-headers from the server response
+          const headers = xhr.getAllResponseHeaders().split("\r\n");
+          headers.forEach(header => {
+            const [key, value] = header.split(": ");
+            if (key && key.startsWith("X-Server-")) {
+              xHeaders[key] = value;
             }
+          });
 
-            return xhr;
-          },
-          modifyRequestResponse: function (xhr) {
-            // capture X-headers from the server response
-            const headers = xhr.getAllResponseHeaders().split("\r\n");
-            headers.forEach((header) => {
-              const [key, value] = header.split(": ");
-              if (key && key.startsWith("X-Server-")) {
-                xHeaders[key] = value;
-              }
-            });
-
-            return xhr.response;
-          },
-        }),
-        true
-      );
+          return xhr.response;
+        }
+      }), true);
     </script>
   </body>
 </html>
