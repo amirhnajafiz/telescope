@@ -3,6 +3,7 @@ package ipfs
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 const dirPath = "bp/idp"
@@ -11,15 +12,17 @@ const dirPath = "bp/idp"
 type mock struct{}
 
 // Get retrieves data from IPFS using the provided CID
-func (m *mock) Get(cid string) ([]byte, error) {
+func (m *mock) Get(cid string) ([]byte, int64, error) {
 	// build the file path
 	path := fmt.Sprintf("%s/%s", dirPath, cid)
+
+	start := time.Now()
 
 	// read the data from the file
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return data, nil
+	return data, time.Since(start).Milliseconds(), nil
 }

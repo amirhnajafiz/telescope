@@ -30,7 +30,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	span.SetAttributes(attribute.String("clientId", clientID))
 
 	// fetch MPD file from IPFS
-	mpd, err := a.IPFS.Get(fmt.Sprintf("%s/stream.mpd", cid))
+	mpd, _, err := a.IPFS.Get(fmt.Sprintf("%s/stream.mpd", cid))
 	if err != nil {
 		a.Logr.Error("failed to fetch mpd", zap.String("cid", cid), zap.Error(err))
 
@@ -121,7 +121,7 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	// fetch the segment from IPFS if not cached
 	start := time.Now()
 	if !cached {
-		segment, err = a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
+		segment, _, err = a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
 		if err != nil {
 			a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), "/api/stream").Inc()
 			return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
