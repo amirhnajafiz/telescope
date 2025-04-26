@@ -38,80 +38,100 @@
       const player = dashjs.MediaPlayer().create();
       const video = document.querySelector("#videoPlayer");
 
-      let stallStartTime = 0;
+      let stallStartTime = performance.now();
       let totalStallTime = 0;
 
+      // Utility function to log events
+      const logEvent = (message, data = null) => {
+        console.log(message, data);
+      };
+
       // Track stall time
-      player.on(dashjs.MediaPlayer.events.BUFFER_EMPTY, () => {
-        console.log("BUFFER_EMPTY event triggered");
-        stallStartTime = performance.now();
-      });
+      const trackStallTime = () => {
+        player.on(dashjs.MediaPlayer.events.BUFFER_EMPTY, () => {
+          logEvent("BUFFER_EMPTY event triggered");
+          stallStartTime = performance.now();
+        });
 
-      player.on(dashjs.MediaPlayer.events.BUFFER_LOADED, () => {
-        console.log("BUFFER_LOADED event triggered");
-        if (stallStartTime > 0) {
-          const stallDuration = performance.now() - stallStartTime;
-          totalStallTime += stallDuration;
-          console.log(
-            `Stall duration added: ${stallDuration}ms, Total stall time: ${totalStallTime}ms`
-          );
-          stallStartTime = 0;
-        }
-      });
+        player.on(dashjs.MediaPlayer.events.BUFFER_LOADED, () => {
+          logEvent("BUFFER_LOADED event triggered");
+          if (stallStartTime > 0) {
+            const stallDuration = performance.now() - stallStartTime;
+            totalStallTime += stallDuration;
+            logEvent(
+              `Stall duration added: ${stallDuration}ms, Total stall time: ${totalStallTime}ms`
+            );
+            stallStartTime = 0;
+          }
+        });
+      };
 
-      // Event listeners
-      player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
-        document.getElementById("log").innerText = `Client ID: ${clientID}`;
-      });
-      player.on(
-        dashjs.MediaPlayer.events.FRAGMENT_LOADING_STARTED,
-        function (e) {
-          console.log("Loading segment:", e.request.url);
-        }
-      );
-      player.on(dashjs.MediaPlayer.events.MANIFEST_LOADED, function (e) {
-        console.log("📜 Manifest event object:", e);
-      });
-      player.on(
-        dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED,
-        function (e) {
-          console.log(
-            `🎚️ Quality changed: type=${e.mediaType}, new index=${e.newQuality}`
-          );
-        }
-      );
-      player.on(dashjs.MediaPlayer.events.BUFFER_LEVEL_UPDATED, (e) => {
-        console.log(`📊 Buffer level: ${e.bufferLevel.toFixed(2)}s`);
-      });
-
-      // Extend RequestModifier to send additional headers
-      player.extend(
-        "RequestModifier",
-        function () {
-          return {
-            modifyRequestHeader: function (xhr) {
-              xhr.setRequestHeader("X-Client-ID", clientID);
-
-              // Add bandwidth, stall rate, and video quality
-              const bandwidth = player.getAverageThroughput("video");
+      // Add custom headers to requests
+      const extendRequestModifier = () => {
+        player.extend(
+          "RequestModifier",
+          () => ({
+            modifyRequestHeader: (xhr) => {
+              const bandwidth = player.getAverageThroughput("video") || 0;
               const totalVideoTime = video.duration || 1; // Avoid division by zero
-              const stallRate = totalStallTime / totalVideoTime;
-
+              const stallRate = (
+                totalStallTime /
+                1000 /
+                totalVideoTime
+              ).toFixed(5); // Convert ms to seconds
               const qualityIndex = player.getQualityFor("video");
 
+              xhr.setRequestHeader("X-Client-ID", clientID);
               xhr.setRequestHeader("X-Bandwidth", bandwidth);
-              xhr.setRequestHeader("X-Stall-Rate", stallRate.toFixed(10));
+              xhr.setRequestHeader("X-Stall-Rate", stallRate);
               xhr.setRequestHeader("X-Segment-Quality", qualityIndex);
+
+              logEvent("Headers added:", {
+                "X-Client-ID": clientID,
+                "X-Bandwidth": bandwidth,
+                "X-Stall-Rate": stallRate,
+                "X-Segment-Quality": qualityIndex,
+              });
 
               return xhr;
             },
-          };
-        },
-        true
-      );
+          }),
+          true
+        );
+      };
 
-      player.initialize(video, mpdUrl, true);
-      video.play();
+      // Initialize player and attach event listeners
+      const initializePlayer = () => {
+        player.initialize(video, mpdUrl, true);
+        video.play();
+
+        player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
+          document.getElementById("log").innerText = `Client ID: ${clientID}`;
+        });
+
+        player.on(dashjs.MediaPlayer.events.FRAGMENT_LOADING_STARTED, (e) => {
+          logEvent("Loading segment:", e.request.url);
+        });
+
+        player.on(dashjs.MediaPlayer.events.MANIFEST_LOADED, (e) => {
+          logEvent("📜 Manifest event object:", e);
+        });
+
+        player.on(dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED, (e) => {
+          logEvent(
+            `🎚️ Quality changed: type=${e.mediaType}, new index=${e.newQuality}`
+          );
+        });
+
+        player.on(dashjs.MediaPlayer.events.BUFFER_LEVEL_UPDATED, (e) => {
+          logEvent(`📊 Buffer level: ${e.bufferLevel.toFixed(2)}s`);
+        });
+      };
+
+      // Main execution
+      trackStallTime();
+      extendRequestModifier();
+      initializePlayer();
     </script>
   </body>
 </html>
