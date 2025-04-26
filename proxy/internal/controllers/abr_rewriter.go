@@ -28,8 +28,8 @@ func NewAbrRewriter(cache *cache.Cache, logr *zap.Logger) *AbrRewriter {
 	return &AbrRewriter{
 		Cache: cache,
 		Logr:  logr,
-		tn:    0,
-		tg:    0,
+		tn:    1,
+		tg:    1,
 		lock:  sync.Mutex{},
 	}
 }
@@ -58,31 +58,23 @@ func (p *AbrRewriter) RewriteMPD(original []byte, cid string, tc float64) ([]byt
 		return nil, err
 	}
 
-	// calculate the bandwidth
+	// change the bandwidth of the representations based on the cache status
 	for _, period := range tree.Period {
 		for _, adapt := range period.AdaptationSets {
 			for i := range adapt.Representations {
 				rep := &adapt.Representations[i]
 
-				// Construct the full Media path
-				if adapt.SegmentTemplate != nil && adapt.SegmentTemplate.Media != nil {
-					mediaTemplate := *adapt.SegmentTemplate.Media
-					fullPath := p.constructFullPath(mediaTemplate, *rep.ID, 4) // Example: Number = 4
-					p.Logr.Info("Full Media Path", zap.String("path", fullPath))
-
-					// Check if the item is cached
-					if p.Cache.Exists(fullPath) {
-						p.Logr.Info("Item is cached", zap.String("path", fullPath))
-					} else {
-						p.Logr.Info("Item is not cached", zap.String("path", fullPath))
-					}
-				}
+				// construct the full Media path
+				mediaTemplate := *adapt.SegmentTemplate.Media
+				fullPath := p.constructFullPath(mediaTemplate, *rep.ID, i+1)
 
 				// adjust bandwidth based on cache status
 				var newBw float64
-				if p.Cache.Exists(*rep.ID) {
+				if p.Cache.Exists(fullPath) {
+					p.Logr.Info("segment is cached", zap.String("path", fullPath))
 					newBw = tc - p.tg
 				} else {
+					p.Logr.Info("segment is not cached", zap.String("path", fullPath))
 					newBw = tc - p.tn
 				}
 
@@ -100,20 +92,20 @@ func (p *AbrRewriter) RewriteMPD(original []byte, cid string, tc float64) ([]byt
 
 // constructFullPath replaces placeholders in the Media template with actual values
 func (p *AbrRewriter) constructFullPath(template, representationID string, number int) string {
-	// Replace $RepresentationID$ with the actual representation ID
+	// replace $RepresentationID$ with the actual representation ID
 	path := strings.ReplaceAll(template, "$RepresentationID$", representationID)
 
-	// Replace $Number%05d$ with the formatted number
+	// replace $Number%05d$ with the formatted number
 	numberPlaceholder := regexp.MustCompile(`\$Number%0(\d+)d\$`)
 	path = numberPlaceholder.ReplaceAllStringFunc(path, func(match string) string {
 		width, _ := strconv.Atoi(match[8 : len(match)-2]) // Extract width from %05d
 		return fmt.Sprintf("%0*d", width, number)
 	})
 
-	// Remove "/stream" from the path
+	// remove "/stream" from the path
 	path = strings.ReplaceAll(path, "/stream", "")
 
-	// Construct the relative path by trimming the "/api/" prefix
+	// construct the relative path by trimming the "/api/" prefix
 	relativePath := strings.TrimPrefix(path, "/api/")
 
 	return relativePath
