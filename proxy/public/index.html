@@ -72,7 +72,7 @@
           "RequestModifier",
           () => ({
             modifyRequestHeader: (xhr) => {
-              const bandwidth = player.getAverageThroughput("video") || 0;
+              const bandwidth = player.getAverageThroughput("video") / 1024 / 8 || 1; // Bandwidth in Mbps
               const totalVideoTime = video.duration || 1; // Avoid division by zero
               const stallRate = (
                 totalStallTime /

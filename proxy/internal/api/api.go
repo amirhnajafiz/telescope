@@ -22,6 +22,7 @@ type API struct {
 	IPFS        ipfs.Client
 	Cache       *cache.Cache
 	ABRRewriter *controllers.AbrRewriter
+	MPDBuilder  *controllers.MPDBuilder
 }
 
 // Register method takes a fiber.App instance and defines all the endpoints

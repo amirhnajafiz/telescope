@@ -51,6 +51,9 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	// create a new abr-rewriter
 	abrRewriter := controllers.NewAbrRewriter(cacheInstance, logger.Named("abr-rewriter"))
 
+	// create a new MPD builder
+	mpdBuilder := controllers.NewMPDBuilder(logger.Named("mpd-builder"))
+
 	// create a new API instance
 	return &api.API{
 		Logr:        logger.Named("api"),
@@ -59,5 +62,6 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		IPFS:        ipfsClient,
 		Cache:       cacheInstance,
 		ABRRewriter: abrRewriter,
+		MPDBuilder:  mpdBuilder,
 	}, nil
 }

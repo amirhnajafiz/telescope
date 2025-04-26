@@ -41,7 +41,7 @@ func (c *Cache) Retrieve(cid string) ([]byte, error) {
 
 // Exists checks if the data exists in the cache
 func (c *Cache) Exists(path string) bool {
-	return exists(path)
+	return exists(fmt.Sprintf("%s/%s", c.baseDir, path))
 }
 
 // GetHitCounts returns the number of cache hits

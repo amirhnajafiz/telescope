@@ -39,16 +39,18 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	a.Metrics.IPFSBandwidth.Set(float64(len(mpd)) / float64(rtt))
 
 	// get client bandwidth from the request header
-	clientBandwidth := ctx.Get("X-Bandwidth", "0")
-	clientBandwidthFloat, err := strconv.ParseFloat(clientBandwidth, 64)
+	clientBandwidth, _ := strconv.ParseFloat(ctx.Get("X-Bandwidth", "0"), 64)
+
+	// build MPD
+	modifiedMPD, err := a.MPDBuilder.Build(mpd, cid)
 	if err != nil {
-		a.Logr.Error("failed to parse client bandwidth", zap.String("cid", cid), zap.String("bandwidth", clientBandwidth), zap.Error(err))
+		a.Logr.Error("failed to build mpd", zap.String("cid", cid), zap.Error(err))
 		a.Metrics.SysErrorCount.WithLabelValues("/api/content").Inc()
-		return ctx.Status(fiber.StatusBadRequest).SendString("failed to parse client bandwidth")
+		return ctx.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("failed to build manifest:\n %s", err))
 	}
 
 	// rewrite MPD via ABR policy
-	rewritten, err := a.ABRRewriter.RewriteMPD(mpd, cid, clientBandwidthFloat)
+	rewritten, err := a.ABRRewriter.RewriteMPD(modifiedMPD, cid, clientBandwidth)
 	if err != nil {
 		a.Logr.Error("failed to rewrite mpd", zap.String("cid", cid), zap.Error(err))
 		a.Metrics.SysErrorCount.WithLabelValues("/api/content").Inc()
