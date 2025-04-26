@@ -56,32 +56,3 @@ func Exists(path string) bool {
 
 	return true
 }
-
-// CountInDir counts the number of files in a directory
-func CountInDir(path string) (int, error) {
-	// open the directory
-	dir, err := os.Open(path)
-	if err != nil {
-		return 0, err
-	}
-	defer dir.Close()
-
-	// read the directory entries
-	entries, err := dir.Readdir(-1)
-	if err != nil {
-		return 0, err
-	}
-
-	return len(entries), nil
-}
-
-// Delete a file
-func Delete(path string) error {
-	// remove the file
-	err := os.Remove(path)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}

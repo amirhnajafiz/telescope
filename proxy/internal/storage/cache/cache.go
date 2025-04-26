@@ -41,9 +41,9 @@ func (c *Cache) Retrieve(cid string) ([]byte, error) {
 	return files.Read(path)
 }
 
-// Size returns the number of files in the cache directory
-func (c *Cache) Size() (int, error) {
-	return files.CountInDir(c.baseDir)
+// Exists checks if the data exists in the cache
+func (c *Cache) Exists(path string) bool {
+	return files.Exists(path)
 }
 
 // GetHitCounts returns the number of cache hits
