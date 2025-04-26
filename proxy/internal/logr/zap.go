@@ -8,7 +8,7 @@ import (
 )
 
 // NewZapLogger creates a new zap logger instance
-func NewZapLogger(debug bool) (*zap.Logger, error) {
+func NewZapLogger(debug bool) *zap.Logger {
 	var lvl zapcore.Level
 	if debug {
 		lvl = zapcore.DebugLevel
@@ -25,5 +25,5 @@ func NewZapLogger(debug bool) (*zap.Logger, error) {
 	core := zapcore.NewTee(cores...)
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 
-	return logger, nil
+	return logger
 }

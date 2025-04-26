@@ -18,13 +18,13 @@ import (
 // RegisterAPI creates a new API instance
 func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	// create a new logger instance
-	logger, err := logr.NewZapLogger(cfg.Debug)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create logger: %w", err)
-	}
+	logger := logr.NewZapLogger(cfg.Debug)
 
 	// create a new otel tracer
-	var tr trace.Tracer
+	var (
+		tr  trace.Tracer
+		err error
+	)
 	if len(cfg.Jaeger) > 0 {
 		tr, err = tracing.NewProductionTracer(cfg.Jaeger)
 		logger.Info("Jaeger tracing enabled")
@@ -44,26 +44,17 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		metrics.NewServer(cfg.MetricsPort)
 	}
 
-	// create a new IPFS client instance
-	ipfsClient := ipfs.NewClient(cfg.IPFSGateway)
-
 	// create a new cache instance
 	cacheInstance := cache.NewCache(cfg.CachePath)
-
-	// create a new abr-rewriter
-	abrRewriter := controllers.NewAbrRewriter(cacheInstance, logger.Named("abr-rewriter"))
-
-	// create a new MPD builder
-	mpdBuilder := controllers.NewMPDBuilder(logger.Named("mpd-builder"))
 
 	// create a new API instance
 	return &api.API{
 		Logr:        logger.Named("api"),
 		Metrics:     metricsInstance,
 		Tracer:      tr,
-		IPFS:        ipfsClient,
+		IPFS:        ipfs.NewClient(cfg.IPFSGateway),
 		Cache:       cacheInstance,
-		ABRRewriter: abrRewriter,
-		MPDBuilder:  mpdBuilder,
+		ABRRewriter: controllers.NewAbrRewriter(cacheInstance, logger.Named("abr-rewriter")),
+		MPDBuilder:  controllers.NewMPDBuilder(logger.Named("mpd-builder")),
 	}, nil
 }
