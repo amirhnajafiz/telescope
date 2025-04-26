@@ -74,10 +74,10 @@ func (p *AbrRewriter) RewriteMPD(original []byte, cid string, tc float64) ([]byt
 				var newBw float64
 				if p.Cache.Exists(fullPath) {
 					p.Logr.Info("segment is cached", zap.String("path", fullPath))
-					newBw = (tc - p.tg) * alpha
+					newBw = min((tc-p.tg)*alpha, float64(*rep.Bandwidth)*(1-alpha))
 				} else {
 					p.Logr.Info("segment is not cached", zap.String("path", fullPath))
-					newBw = (tc - p.tn) * (1 - alpha)
+					newBw = max((tc-p.tn)*(1-alpha), float64(*rep.Bandwidth)*alpha)
 				}
 
 				// ensure bandwidth is at least 1 Mbps
