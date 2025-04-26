@@ -13,7 +13,7 @@ type gateway struct {
 }
 
 // Get retrieves data from IPFS using the provided CID
-func (g *gateway) Get(cid string) ([]byte, int64, error) {
+func (g *gateway) Get(cid string) ([]byte, time.Duration, error) {
 	// connect to the IPFS node
 	sh := shell.NewShell(g.url)
 
@@ -32,5 +32,5 @@ func (g *gateway) Get(cid string) ([]byte, int64, error) {
 		return nil, 0, err
 	}
 
-	return data, time.Since(start).Milliseconds(), nil
+	return data, time.Since(start), nil
 }

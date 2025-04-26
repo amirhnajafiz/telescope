@@ -35,11 +35,17 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
 
-	a.Metrics.IPFSRTT.Observe(float64(rtt))
-	a.Metrics.IPFSBandwidth.Set(float64(len(mpd)) / float64(rtt))
+	// calculate IPFS bandwidth
+	tp := 1000000 * float64(len(mpd)) / 8 / 1024 / float64(rtt.Microseconds())
+
+	a.Metrics.IPFSRTT.Observe(float64(rtt.Microseconds()))
+	a.Metrics.IPFSBandwidth.Set(tp)
 
 	// get client bandwidth from the request header
 	clientBandwidth, _ := strconv.ParseFloat(ctx.Get("X-Bandwidth", "0"), 64)
+
+	a.ABRRewriter.SetIpfsBandwidth(tp)
+	a.ABRRewriter.SetGatewayBandwidth(clientBandwidth)
 
 	// build MPD
 	modifiedMPD, err := a.MPDBuilder.Build(mpd, cid)
@@ -112,19 +118,16 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	}
 
 	// fetch the segment from IPFS if not cached
-	start := time.Now()
 	if !cached {
-		segment, _, err = a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
+		var rtt time.Duration
+
+		segment, rtt, err = a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
 		if err != nil {
 			a.Logr.Error("failed to fetch segment", zap.String("cid", cid), zap.String("filename", filename), zap.Error(err))
 			a.Metrics.SysErrorCount.WithLabelValues("/api/stream").Inc()
 			return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
 		}
-	}
-	duration := time.Since(start)
 
-	// cache the segment
-	if !cached {
 		if err := a.Cache.Store(cacheKey, segment); err != nil {
 			a.Logr.Error(
 				"failed to store segment in cache",
@@ -134,8 +137,13 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 			)
 		}
 
-		a.Metrics.IPFSBandwidth.Set(float64(len(segment)) / float64(duration.Microseconds()))
-		a.Metrics.IPFSRTT.Observe(float64(duration.Microseconds()))
+		// calculate IPFS bandwidth
+		tp := 1000000 * float64(len(segment)) / 8 / 1024 / float64(rtt.Microseconds())
+
+		a.Metrics.IPFSRTT.Observe(float64(rtt.Microseconds()))
+		a.Metrics.IPFSBandwidth.Set(tp)
+
+		a.ABRRewriter.SetIpfsBandwidth(tp)
 	}
 
 	a.Metrics.SysBytesTransferred.WithLabelValues("/api/stream").Add(float64(len(segment)))

@@ -1,8 +1,10 @@
 package ipfs
 
+import "time"
+
 // Client is an interface for IPFS client operations
 type Client interface {
-	Get(cid string) ([]byte, int64, error)
+	Get(cid string) ([]byte, time.Duration, error)
 }
 
 // NewClient creates a new IPFS gateway instance
