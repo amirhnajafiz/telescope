@@ -100,6 +100,24 @@ docker-compose.yaml          # Execute project using Docker
 
 ---
 
+## Run using Docker
+
+1. First run the following scripts to download and encode videos.
+   1. `scripts/videos/fetch.sh`
+   2. `scripts/videos/encode.sh`
+2. Then run `docker-compose up -d ipfs0 ipfs1 ipfs2`
+3. After that run cluster bootstrap script `scripts/cluster/bootstrap.sh`
+4. Then run `docker-compose up -d bootstrap`
+5. After that you can run other services `docker-compose up -d telescope prometheus jaeger`
+
+### UIs
+
+- `localhost:5050` : Telescope proxy UI
+- `localhost:9090` : Prometheus UI
+- `localhost:16686` : Jaeger UI
+
+---
+
 ## 📜 License
 
 This project is licensed under the [MIT License](LICENSE).
