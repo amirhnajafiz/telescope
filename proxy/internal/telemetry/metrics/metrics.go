@@ -6,72 +6,88 @@ import (
 )
 
 const (
-	Namespace = "telescope"
-	Subsystem = "proxy"
+	Namespace       = "TELESCOPE"
+	SysSubsystem    = "SYS"
+	IPFSSubsystem   = "IPFS"
+	ClientSubsystem = "CLIENT"
 )
 
 // Metrics holds all the Prometheus metrics used in the application
 type Metrics struct {
-	RoundTripTime    *prometheus.HistogramVec
-	Bandwidth        *prometheus.CounterVec
-	ErrorCount       *prometheus.CounterVec
-	BytesTransferred *prometheus.CounterVec
-	CacheHits        prometheus.Counter
-	CacheMisses      prometheus.Counter
-	CacheRatio       prometheus.Gauge
-	LocalStorageSize prometheus.Gauge
+	ClientBandwidth     *prometheus.GaugeVec
+	ClientQuality       *prometheus.GaugeVec
+	ClientStallRate     *prometheus.CounterVec
+	SysErrorCount       *prometheus.CounterVec
+	SysBytesTransferred *prometheus.CounterVec
+	SysCacheHits        prometheus.Counter
+	SysCacheMisses      prometheus.Counter
+	SysCacheRatio       prometheus.Gauge
+	IPFSBandwidth       prometheus.Gauge
+	IPFSRTT             prometheus.Histogram
 }
 
 // NewMetrics initializes and returns a new Metrics struct with all the required Prometheus metrics
 func NewMetrics() *Metrics {
 	return &Metrics{
-		RoundTripTime: promauto.NewHistogramVec(prometheus.HistogramOpts{
-			Name:      "round_trip_time_seconds",
-			Help:      "Round trip time in seconds.",
+		ClientBandwidth: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Name:      "client_bandwidth_bytes",
+			Help:      "Client bandwidth usage in bytes.",
 			Namespace: Namespace,
-			Subsystem: Subsystem,
-		}, []string{"method", "endpoint"}),
-		Bandwidth: promauto.NewCounterVec(prometheus.CounterOpts{
-			Name:      "bandwidth_bytes",
-			Help:      "Bandwidth usage in bytes.",
+			Subsystem: ClientSubsystem,
+		}, []string{"client_id"}),
+		ClientQuality: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Name:      "client_quality_index",
+			Help:      "Client quality index.",
 			Namespace: Namespace,
-			Subsystem: Subsystem,
-		}, []string{"method", "endpoint"}),
-		CacheHits: promauto.NewCounter(prometheus.CounterOpts{
-			Name:      "cache_hits",
+			Subsystem: ClientSubsystem,
+		}, []string{"client_id"}),
+		ClientStallRate: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name:      "client_stall_rate",
+			Help:      "Client stall rate.",
+			Namespace: Namespace,
+			Subsystem: ClientSubsystem,
+		}, []string{"client_id"}),
+		SysErrorCount: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name:      "system_error_count",
+			Help:      "Number of system errors.",
+			Namespace: Namespace,
+			Subsystem: SysSubsystem,
+		}, []string{"path"}),
+		SysBytesTransferred: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name:      "system_bytes_transferred",
+			Help:      "Total bytes transferred by the system.",
+			Namespace: Namespace,
+			Subsystem: SysSubsystem,
+		}, []string{"path"}),
+		SysCacheHits: promauto.NewCounter(prometheus.CounterOpts{
+			Name:      "system_cache_hits",
 			Help:      "Number of cache hits.",
 			Namespace: Namespace,
-			Subsystem: Subsystem,
+			Subsystem: SysSubsystem,
 		}),
-		CacheMisses: promauto.NewCounter(prometheus.CounterOpts{
-			Name:      "cache_misses",
+		SysCacheMisses: promauto.NewCounter(prometheus.CounterOpts{
+			Name:      "system_cache_misses",
 			Help:      "Number of cache misses.",
 			Namespace: Namespace,
-			Subsystem: Subsystem,
+			Subsystem: SysSubsystem,
 		}),
-		CacheRatio: promauto.NewGauge(prometheus.GaugeOpts{
-			Name:      "cache_ratio",
+		SysCacheRatio: promauto.NewGauge(prometheus.GaugeOpts{
+			Name:      "system_cache_ratio",
 			Help:      "Cache hit ratio.",
 			Namespace: Namespace,
-			Subsystem: Subsystem,
+			Subsystem: SysSubsystem,
 		}),
-		LocalStorageSize: promauto.NewGauge(prometheus.GaugeOpts{
-			Name:      "local_storage_size_bytes",
-			Help:      "Local storage size in bytes.",
+		IPFSBandwidth: promauto.NewGauge(prometheus.GaugeOpts{
+			Name:      "ipfs_bandwidth_bytes",
+			Help:      "IPFS bandwidth usage in bytes.",
 			Namespace: Namespace,
-			Subsystem: Subsystem,
+			Subsystem: IPFSSubsystem,
 		}),
-		ErrorCount: promauto.NewCounterVec(prometheus.CounterOpts{
-			Name:      "error_count",
-			Help:      "Number of errors.",
+		IPFSRTT: promauto.NewHistogram(prometheus.HistogramOpts{
+			Name:      "round_trip_time",
+			Help:      "Round trip time.",
 			Namespace: Namespace,
-			Subsystem: Subsystem,
-		}, []string{"method", "endpoint"}),
-		BytesTransferred: promauto.NewCounterVec(prometheus.CounterOpts{
-			Name:      "bytes_transferred",
-			Help:      "Total bytes transferred.",
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-		}, []string{"method", "endpoint"}),
+			Subsystem: IPFSSubsystem,
+		}),
 	}
 }
