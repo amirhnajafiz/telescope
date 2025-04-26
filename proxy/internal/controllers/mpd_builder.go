@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hare1039/go-mpd"
@@ -23,7 +24,14 @@ func NewMPDBuilder(logr *zap.Logger, trc trace.Tracer) *MPDBuilder {
 }
 
 // Build creates a new MPD file with the given CID based on the original MPD
-func (p *MPDBuilder) Build(original []byte, cid string) ([]byte, error) {
+func (p *MPDBuilder) Build(
+	ctx context.Context,
+	original []byte,
+	cid string,
+) ([]byte, error) {
+	_, span := p.Tracer.Start(ctx, "mpd-builder")
+	defer span.End()
+
 	p.Logr.Info("building MPD", zap.String("cid", cid))
 
 	// create a copy of the original MPD

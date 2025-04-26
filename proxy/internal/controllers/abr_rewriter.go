@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"sync"
 
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
@@ -53,7 +54,15 @@ func (p *AbrRewriter) SetGatewayBandwidth(bw float64) {
 }
 
 // RewriteMPD rewrites the MPD file based on the current bandwidth and cache status
-func (p *AbrRewriter) RewriteMPD(original []byte, cid string, tc float64) ([]byte, error) {
+func (p *AbrRewriter) RewriteMPD(
+	ctx context.Context,
+	original []byte,
+	cid string,
+	tc float64,
+) ([]byte, error) {
+	_, span := p.Tracer.Start(ctx, "abr-rewriter")
+	defer span.End()
+
 	p.Logr.Info("rewriting MPD", zap.String("cid", cid), zap.Float64("bandwidth", tc))
 
 	// create a copy of the original MPD

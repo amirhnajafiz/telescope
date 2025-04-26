@@ -14,7 +14,7 @@ import (
 // getContent handles the download of content, used for getting mpd files
 func (a *API) getContent(ctx *fiber.Ctx) error {
 	// start the tracing span
-	_, span := a.Tracer.Start(ctx.Context(), "/api/content", trace.WithSpanKind(trace.SpanKindServer))
+	tracingCtx, span := a.Tracer.Start(ctx.Context(), "/api/content", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
 	// get the cid from the URL
@@ -48,7 +48,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	a.ABRRewriter.SetGatewayBandwidth(clientBandwidth)
 
 	// build MPD
-	modifiedMPD, err := a.MPDBuilder.Build(mpd, cid)
+	modifiedMPD, err := a.MPDBuilder.Build(tracingCtx, mpd, cid)
 	if err != nil {
 		a.Logr.Error("failed to build mpd", zap.String("cid", cid), zap.Error(err))
 		a.Metrics.SysErrorCount.WithLabelValues("/api/content").Inc()
@@ -56,7 +56,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	}
 
 	// rewrite MPD via ABR policy
-	rewritten, err := a.ABRRewriter.RewriteMPD(modifiedMPD, cid, clientBandwidth)
+	rewritten, err := a.ABRRewriter.RewriteMPD(tracingCtx, modifiedMPD, cid, clientBandwidth)
 	if err != nil {
 		a.Logr.Error("failed to rewrite mpd", zap.String("cid", cid), zap.Error(err))
 		a.Metrics.SysErrorCount.WithLabelValues("/api/content").Inc()
