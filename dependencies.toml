@@ -1,9 +1,19 @@
 [dependencies]
-# Install MP4Box
-mp4box = { source = "https://gpac.wp.imt.fr/downloads/" }
+# Core Dependencies
+ffmpeg = { description = "Required for video processing and transcoding", install = "https://ffmpeg.org/download.html" }
+jq = { description = "Command-line JSON processor for parsing and manipulating JSON data", install = "https://stedolan.github.io/jq/download/" }
+wget = { description = "Command-line utility for downloading files", install = "https://www.gnu.org/software/wget/" }
 
-# Install Docker
-docker = { source = "https://docs.docker.com/get-docker/" }
+# Containerization Tools
+docker = { description = "Containerization platform for running Telescope services", install = "https://docs.docker.com/get-docker/" }
+docker_compose = { description = "Tool for defining and running multi-container Docker applications", install = "https://docs.docker.com/compose/install/" }
 
-# Install Docker Compose
-docker_compose = { source = "https://docs.docker.com/compose/install/" }
+# Observability Tools
+prometheus = { description = "Metrics collection and monitoring system", install = "https://prometheus.io/download/" }
+jaeger = { description = "Distributed tracing system for observability", install = "https://www.jaegertracing.io/download/" }
+
+# IPFS
+ipfs = { description = "InterPlanetary File System node for decentralized storage", install = "https://docs.ipfs.tech/install/" }
+
+# Development Tools
+go = { description = "Go programming language for building Telescope", install = "https://go.dev/dl/" }
