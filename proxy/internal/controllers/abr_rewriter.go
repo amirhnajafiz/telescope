@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/hare1039/go-mpd"
 	"go.uber.org/zap"
@@ -16,8 +17,9 @@ const (
 
 // AbrRewriter is a structure that rewrites the MPD file based on the current bandwidth
 type AbrRewriter struct {
-	Cache *cache.Cache
-	Logr  *zap.Logger
+	Cache  *cache.Cache
+	Logr   *zap.Logger
+	Tracer trace.Tracer
 
 	tn   float64 // ipfs network bandwidth
 	tg   float64 // gateway network bandwidth
@@ -25,13 +27,14 @@ type AbrRewriter struct {
 }
 
 // NewAbrRewriter creates a new instance of AbrRewriter
-func NewAbrRewriter(cache *cache.Cache, logr *zap.Logger) *AbrRewriter {
+func NewAbrRewriter(cache *cache.Cache, logr *zap.Logger, trc trace.Tracer) *AbrRewriter {
 	return &AbrRewriter{
-		Cache: cache,
-		Logr:  logr,
-		tn:    1,
-		tg:    1,
-		lock:  sync.Mutex{},
+		Cache:  cache,
+		Logr:   logr,
+		Tracer: trc,
+		tn:     1,
+		tg:     1,
+		lock:   sync.Mutex{},
 	}
 }
 

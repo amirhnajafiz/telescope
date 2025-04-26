@@ -4,18 +4,21 @@ import (
 	"fmt"
 
 	"github.com/hare1039/go-mpd"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 // MPDBuilder is a structure that handles the building of MPD files
 type MPDBuilder struct {
-	Logr *zap.Logger
+	Logr   *zap.Logger
+	Tracer trace.Tracer
 }
 
 // NewMPDBuilder creates a new instance of MPDBuilder
-func NewMPDBuilder(logr *zap.Logger) *MPDBuilder {
+func NewMPDBuilder(logr *zap.Logger, trc trace.Tracer) *MPDBuilder {
 	return &MPDBuilder{
-		Logr: logr,
+		Logr:   logr,
+		Tracer: trc,
 	}
 }
 

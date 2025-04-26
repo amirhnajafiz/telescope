@@ -54,7 +54,7 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 		Tracer:      tr,
 		IPFS:        ipfs.NewClient(cfg.IPFSGateway),
 		Cache:       cacheInstance,
-		ABRRewriter: controllers.NewAbrRewriter(cacheInstance, logger.Named("abr-rewriter")),
-		MPDBuilder:  controllers.NewMPDBuilder(logger.Named("mpd-builder")),
+		ABRRewriter: controllers.NewAbrRewriter(cacheInstance, logger.Named("abr-rewriter"), tr),
+		MPDBuilder:  controllers.NewMPDBuilder(logger.Named("mpd-builder"), tr),
 	}, nil
 }
