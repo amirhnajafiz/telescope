@@ -21,19 +21,44 @@
         color: #444;
         margin-top: 1em;
       }
+
+      button {
+        margin: 0.5em;
+        padding: 0.5em 1em;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
     </style>
   </head>
 
   <body>
     <h2>🚀 🌕 🔭 Telescope DASH Client</h2>
 
-    <video id="videoPlayer" muted controls autoplay></video>
+    <h3 id="log">Loading...</h3>
 
-    <div id="log">Loading...</div>
+    <div id="videoSelector">
+      <h5>Select a Video:</h5>
+      <button data-value="QmexzaomQM7vrHqNKhSJYa1rxzx89V6uvpdRQSVxMWZUWH">
+        big_buck_bunny_720p_5mb
+      </button>
+      <button data-value="QmXpfPZKAQhaaTqYUeV2m2UafeTgnromw71n4gezK7RPZi">
+        big_buck_bunny_720p_10mb
+      </button>
+      <button data-value="QmPXSHiQ7Us98SeMDVmvXpm1gKnsH4Ptp5M3mcdErARRq5">
+        big_buck_bunny_720p_20mb
+      </button>
+      <button data-value="QmVErDs6gPM8xDsszXPCRp9NsygcQJDZETdkygmpif2F35">
+        big_buck_bunny_720p_30mb
+      </button>
+    </div>
+
+    <video id="videoPlayer" style="margin-top: 30px;" muted controls autoplay></video>
 
     <script>
       const clientID = Math.random().toString(36).substring(2, 8);
-      const mpdUrl = `/api/output`;
 
       const player = dashjs.MediaPlayer().create();
       const video = document.querySelector("#videoPlayer");
@@ -72,7 +97,8 @@
           "RequestModifier",
           () => ({
             modifyRequestHeader: (xhr) => {
-              const bandwidth = player.getAverageThroughput("video") / 1024 / 8 || 1; // Bandwidth in Mbps
+              const bandwidth =
+                player.getAverageThroughput("video") / 1024 / 8 || 1; // Bandwidth in Mbps
               const totalVideoTime = video.duration || 1; // Avoid division by zero
               const stallRate = (
                 totalStallTime /
@@ -128,10 +154,20 @@
         });
       };
 
-      // Main execution
-      trackStallTime();
-      extendRequestModifier();
-      initializePlayer();
+      // Handle video selection
+      const videoSelector = document.getElementById("videoSelector");
+      videoSelector.addEventListener("click", (event) => {
+        if (event.target.tagName === "BUTTON") {
+          const value = event.target.getAttribute("data-value");
+          mpdUrl = `/api/${value}`;
+          logEvent(`MPD URL updated to: ${mpdUrl}`);
+
+          // Reinitialize the player with the new MPD URL
+          trackStallTime();
+          extendRequestModifier();
+          initializePlayer();
+        }
+      });
     </script>
   </body>
 </html>
