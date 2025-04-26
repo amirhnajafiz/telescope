@@ -1,12 +1,12 @@
-package files
+package cache
 
 import (
 	"os"
 	"path/filepath"
 )
 
-// Write create a new file with the given path and content
-func Write(path string, content []byte) error {
+// write create a new file with the given path and content
+func write(path string, content []byte) error {
 	// create directories in the path if they do not exist
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
@@ -29,8 +29,8 @@ func Write(path string, content []byte) error {
 	return nil
 }
 
-// Read the content of a file
-func Read(path string) ([]byte, error) {
+// read the content of a file
+func read(path string) ([]byte, error) {
 	// open the file for reading
 	file, err := os.Open(path)
 	if err != nil {
@@ -47,8 +47,8 @@ func Read(path string) ([]byte, error) {
 	return content, nil
 }
 
-// Exists, check if a file exists
-func Exists(path string) bool {
+// exists, check if a file exists
+func exists(path string) bool {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return false
