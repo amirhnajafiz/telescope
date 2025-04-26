@@ -14,9 +14,9 @@ const (
 
 // Metrics holds all the Prometheus metrics used in the application
 type Metrics struct {
-	ClientBandwidth     *prometheus.GaugeVec
-	ClientQuality       *prometheus.GaugeVec
-	ClientStallRate     *prometheus.CounterVec
+	ClientBandwidth     prometheus.Gauge
+	ClientQuality       prometheus.Gauge
+	ClientStallRate     prometheus.Counter
 	SysErrorCount       *prometheus.CounterVec
 	SysBytesTransferred *prometheus.CounterVec
 	SysCacheHits        prometheus.Counter
@@ -29,24 +29,24 @@ type Metrics struct {
 // NewMetrics initializes and returns a new Metrics struct with all the required Prometheus metrics
 func NewMetrics() *Metrics {
 	return &Metrics{
-		ClientBandwidth: promauto.NewGaugeVec(prometheus.GaugeOpts{
+		ClientBandwidth: promauto.NewGauge(prometheus.GaugeOpts{
 			Name:      "client_bandwidth_bytes",
 			Help:      "Client bandwidth usage in bytes.",
 			Namespace: Namespace,
 			Subsystem: ClientSubsystem,
-		}, []string{"client_id"}),
-		ClientQuality: promauto.NewGaugeVec(prometheus.GaugeOpts{
+		}),
+		ClientQuality: promauto.NewGauge(prometheus.GaugeOpts{
 			Name:      "client_quality_index",
 			Help:      "Client quality index.",
 			Namespace: Namespace,
 			Subsystem: ClientSubsystem,
-		}, []string{"client_id"}),
-		ClientStallRate: promauto.NewCounterVec(prometheus.CounterOpts{
+		}),
+		ClientStallRate: promauto.NewCounter(prometheus.CounterOpts{
 			Name:      "client_stall_rate",
 			Help:      "Client stall rate.",
 			Namespace: Namespace,
 			Subsystem: ClientSubsystem,
-		}, []string{"client_id"}),
+		}),
 		SysErrorCount: promauto.NewCounterVec(prometheus.CounterOpts{
 			Name:      "system_error_count",
 			Help:      "Number of system errors.",
