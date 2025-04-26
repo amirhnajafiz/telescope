@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -30,29 +31,27 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	mpd, rtt, err := a.IPFS.Get(fmt.Sprintf("%s/stream.mpd", cid))
 	if err != nil {
 		a.Logr.Error("failed to fetch mpd", zap.String("cid", cid), zap.Error(err))
-
 		a.Metrics.SysErrorCount.WithLabelValues("/api/content").Inc()
-
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
 
 	a.Metrics.IPFSRTT.Observe(float64(rtt))
 	a.Metrics.IPFSBandwidth.Set(float64(len(mpd)) / float64(rtt))
 
+	// get client bandwidth from the request header
+	clientBandwidth := ctx.Get("X-Bandwidth", "0")
+	clientBandwidthFloat, err := strconv.ParseFloat(clientBandwidth, 64)
+	if err != nil {
+		a.Logr.Error("failed to parse client bandwidth", zap.String("cid", cid), zap.String("bandwidth", clientBandwidth), zap.Error(err))
+		a.Metrics.SysErrorCount.WithLabelValues("/api/content").Inc()
+		return ctx.Status(fiber.StatusBadRequest).SendString("failed to parse client bandwidth")
+	}
+
 	// rewrite MPD via ABR policy
-	rewritten, err := a.ABRRewriter.RewriteMPD(
-		mpd,
-		clientID,
-		cid,
-		0,
-		0,
-		0,
-	)
+	rewritten, err := a.ABRRewriter.RewriteMPD(mpd, cid, clientBandwidthFloat)
 	if err != nil {
 		a.Logr.Error("failed to rewrite mpd", zap.String("cid", cid), zap.Error(err))
-
 		a.Metrics.SysErrorCount.WithLabelValues("/api/content").Inc()
-
 		return ctx.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("failed to rewrite manifest:\n %s", err))
 	}
 

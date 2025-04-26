@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/amirhnajafiz/telescope/internal/api/middlewares"
 	"github.com/amirhnajafiz/telescope/internal/controllers"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
 	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
@@ -53,5 +54,5 @@ func (a *API) Register(app *fiber.App) {
 
 	// define the contents endpoints
 	contents.Get("/:cid", a.getContent)
-	contents.Get("/:cid/stream/:seg", a.streamContent)
+	contents.Get("/:cid/stream/:seg", middlewares.ExtractHeadersToPrometheus(a.Metrics), a.streamContent)
 }
