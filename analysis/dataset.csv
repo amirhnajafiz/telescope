@@ -1,0 +1,25 @@
+Video Name, Test Index, Client Stall Rate, Client Video Quality, IPFS Bandwidth (Mbps), IPFS RTT (Micro-Second), IPFS Hops, Gateway Bandwidth (Mbps), Cache Ratio
+big_buck_bunny_720p_5mb, 1, 0.49, 4, 20, 2600, 1, 452, 0
+big_buck_bunny_720p_10mb, 1, 0.49, 3, 12, 2715, 2, 450, 0
+big_buck_bunny_720p_20mb, 1, 0.61, 2, 6, 2810, 2, 430, 0
+big_buck_bunny_720p_30mb, 1, 0.72, 2, 4, 3000, 3, 410, 0
+big_buck_bunny_720p_5mb, 2, 0.45, 4, 20, 2540, 1, 450, 0
+big_buck_bunny_720p_10mb, 2, 0.49, 2, 12, 2600, 2, 410, 0
+big_buck_bunny_720p_20mb, 2, 0.70, 2, 6, 2700, 2, 400, 0
+big_buck_bunny_720p_30mb, 2, 0.90, 2, 4, 2900, 3, 400, 0
+big_buck_bunny_720p_5mb, 3, 0.02, 4, 20, 2600, 1, 452, 0.80
+big_buck_bunny_720p_10mb, 3, 0.05, 3, 12, 2715, 1, 450, 0.70
+big_buck_bunny_720p_20mb, 3, 0.10, 3, 6, 2810, 2, 450, 0.75
+big_buck_bunny_720p_30mb, 3, 0.10, 3, 4, 3000, 2, 440, 0.70
+big_buck_bunny_720p_5mb, 4, 0.01, 4, 20, 2600, 1, 452, 0.80
+big_buck_bunny_720p_10mb, 4, 0.03, 4, 12, 2715, 1, 450, 0.70
+big_buck_bunny_720p_20mb, 4, 0.06, 3, 6, 2810, 2, 450, 0.75
+big_buck_bunny_720p_30mb, 4, 0.08, 3, 4, 3000, 2, 440, 0.70
+big_buck_bunny_720p_5mb, 5, 0.10, 3, 30, 2400, 1, 600, 0.50
+big_buck_bunny_720p_10mb, 5, 0.07, 4, 20, 2320, 1, 540, 0.55
+big_buck_bunny_720p_20mb, 5, 0.05, 3, 10, 2400, 1, 500, 0.60
+big_buck_bunny_720p_30mb, 5, 0.06, 3, 10, 3700, 1, 490, 0.70
+big_buck_bunny_720p_5mb, 6, 0.15, 3, 40, 2000, 1, 670, 0.40
+big_buck_bunny_720p_10mb, 6, 0.12, 3, 30, 2100, 1, 600, 0.45
+big_buck_bunny_720p_20mb, 6, 0.08, 3, 20, 2250, 1, 540, 0.58
+big_buck_bunny_720p_30mb, 6, 0.07, 3, 15, 2800, 1, 510, 0.70
