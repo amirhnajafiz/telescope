@@ -55,6 +55,9 @@ Proxy->>IPFS: Fetch segment or serve cached
 Proxy-->>Client: Stream segment
 ```
 
+![](.github/assets/diagram.svg)
+![](.github/assets/sequence.svg)
+
 ---
 
 ## 📊 Metrics and Observability
