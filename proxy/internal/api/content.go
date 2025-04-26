@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -14,7 +15,7 @@ import (
 // getContent handles the download of content, used for getting mpd files
 func (a *API) getContent(ctx *fiber.Ctx) error {
 	// start the tracing span
-	tracingCtx, span := a.Tracer.Start(ctx.Context(), "/api/content", trace.WithSpanKind(trace.SpanKindServer))
+	tracingCtx, span := a.Tracer.Start(context.Background(), "/api/content", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
 	// get the cid from the URL
@@ -73,7 +74,7 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 // streamContent handles the streaming of content over DASH
 func (a *API) streamContent(ctx *fiber.Ctx) error {
 	// start the tracing span
-	_, span := a.Tracer.Start(ctx.Context(), "/api/stream", trace.WithSpanKind(trace.SpanKindServer))
+	tracingCtx, span := a.Tracer.Start(context.Background(), "/api/stream", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
 	// get the cid and segment from the URL
@@ -121,12 +122,17 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	if !cached {
 		var rtt time.Duration
 
+		_, cspan := a.Tracer.Start(tracingCtx, "ipfs")
+
 		segment, rtt, err = a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
 		if err != nil {
 			a.Logr.Error("failed to fetch segment", zap.String("cid", cid), zap.String("filename", filename), zap.Error(err))
 			a.Metrics.SysErrorCount.WithLabelValues("/api/stream").Inc()
+			cspan.End()
 			return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
 		}
+
+		cspan.End()
 
 		if err := a.Cache.Store(cacheKey, segment); err != nil {
 			a.Logr.Error(
