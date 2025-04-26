@@ -1,31 +1,50 @@
 # Telescope
 
-**Telescope** is a smart adaptive bitrate (ABR) proxy system for streaming content over the InterPlanetary File System (IPFS). It dynamically adjusts video quality based on network conditions and cache awareness, improving the efficiency and experience of decentralized video delivery.
+**Telescope** is a smart adaptive bitrate (ABR) proxy system designed for streaming content over the InterPlanetary File System (IPFS). It dynamically adjusts video quality based on network conditions and cache awareness, enhancing the efficiency and user experience of decentralized video delivery.
 
-This project is a **rebuilt version** of the original [Telescope proxy](https://github.com/SBUNetSys/Telescope), redesigned from scratch with a clean architecture, modern observability tools, and improved ABR logic based on formal analysis.
+---
 
-##  What’s New in This Version?
+## 🚀 Features
 
-- ✅ Modular and idiomatic **Golang project structure** (`cmd/`, `internal/`, `pkg/`)
-- ✅ Rewritten **throughput estimation engine** using exponential smoothing for cached and uncached segments
-- ✅ Paper-aligned **ABR logic** using accurate bandwidth deltas (`Tc - Tn`, `Tc - Tg`) to rewrite DASH MPDs dynamically
-- ✅ Real-time **Prometheus metrics** and **OpenTelemetry tracing**
-- ✅ Full-featured **DASH.js browser client** to test streaming behavior and adaptation live
-- ✅ File segment **cache tracking system**
+- **Dynamic ABR Logic**: Rewrites DASH MPDs in real-time using IPFS, Gateway, and Client bandwidth estimations.
+- **Cache Awareness**: Tracks segment caching status to optimize quality selection.
+- **Stateless Microservices**: Replaces stateful proxy servers with scalable, stateless services.
+- **Modern Observability**: Real-time metrics with Prometheus and distributed tracing with OpenTelemetry.
+- **DASH.js Integration**: Fully compatible with DASH.js for live testing of streaming behavior.
+- **Improved Architecture**: Clean, modular project structure with faster service using Go-Fiber.
+- **Scalable Proxy System**: Designed to handle high traffic and large-scale deployments.
 
-## How Video Streaming Works with Telescope
+---
 
-Telescope acts as a smart proxy between a DASH video player and IPFS. It receives video segment requests, estimates network conditions and caching status, and rewrites the video manifest (MPD) in real-time to guide quality selection.
+## 🆕 What’s New in This Version?
 
-The flow:
+- Migration from **Gin** to **Go-Fiber** for improved performance.
+- Redesigned ABR logic aligned with formal analysis and research papers.
+- Enhanced observability with **Prometheus metrics** and **OpenTelemetry tracing**.
+- File-based segment **cache tracking system** for better cache management.
+- Support for **stateless microservices** to improve scalability and reliability.
 
-1. A user opens a video player (DASH.js) in their browser.
-2. The player requests the `.mpd` manifest from Telescope.
-3. Telescope dynamically rewrites the MPD based on current client throughput and cache status.
-4. As the player requests segments, Telescope fetches them from IPFS (or a stub in test mode), tracks bandwidth, and updates throughput estimation.
-5. The next manifest request reflects this updated bandwidth info, helping DASH.js adapt quality accordingly.
+---
 
-```
+## 📖 How Telescope Works
+
+Telescope acts as a smart proxy between a DASH video player and IPFS. It intercepts video segment requests, estimates network conditions and caching status, and dynamically rewrites the video manifest (MPD) to guide adaptive quality selection.
+
+### Workflow
+
+1. **Manifest Request**:
+   - The DASH.js player requests the `.mpd` manifest from Telescope.
+   - Telescope fetches the segment CID list from IPFS and rewrites the MPD based on bandwidth estimations (`Tc`, `Tg`, `Tn`).
+   - The rewritten MPD is returned to the player.
+
+2. **Segment Request**:
+   - The player requests video segments from Telescope.
+   - Telescope fetches the segment from IPFS (or serves it from the cache if available).
+   - The segment is streamed back to the player.
+
+### Sequence Diagram
+
+```plaintext
 Client->>Proxy: GET /videos/bunny.mpd
 Proxy->>IPFS: Fetch segment CID list
 Proxy->>Proxy: Rewrites MPD based on Tc, Tg, Tn
@@ -38,45 +57,49 @@ Proxy-->>Client: Stream segment
 
 ---
 
-### Usage Diagram
+## 📊 Metrics and Observability
 
-![](.github/assets/diagram.svg)
-
-### Sequence Diagram
-
-![](.github/assets/sequence.svg)
-
----
-
-## Metrics and Observability
-
-Telescope exposes real-time metrics and traces to support debugging, monitoring, and performance tuning.
+Telescope provides real-time metrics and distributed tracing to support debugging, monitoring, and performance optimization.
 
 ### Key Metrics
 
-- **RTT (Round-Trip Time)** – segment fetch latency
-- **Bandwidth Estimation** – based on segment size and transfer time
-- **Throughput Tracking** – smoothed client `Tc`, cached `Tg`, uncached `Tn`
-- **Cache Awareness** – per-segment cache hit/miss ratio
-- **Segment Quality History** – logs how quality levels shift over time
+- **RTT (Round-Trip Time)**: Measures segment fetch latency.
+- **Bandwidth Estimation**: Calculates bandwidth based on segment size and transfer time.
+- **Throughput Tracking**: Tracks client-reported throughput via HTTP headers.
+- **Cache Awareness**: Monitors per-segment cache hit/miss ratios.
+- **Segment Quality History**: Logs quality level shifts over time.
 
 ### Observability Tools
 
-- **Prometheus**: exports metrics via `:9090/metrics`
-- **Jaeger/OTel**: full support for distributed tracing via OpenTelemetry
+- **Prometheus**: Exposes metrics at `:9090/metrics`.
+- **OpenTelemetry**: Provides distributed tracing with full support for Jaeger.
 
 ---
 
-## Project Structure
+## 📂 Project Structure
 
 ```
-telescope/
-├── proxy/internal/cmd/      → API registerer-AKA Serviec Injector (api.go)
-├── proxy/internal/          → core modules (api, cache, abr, throughput, telemetry)
-├── configs/                 → example proxy config file
-├── client/                  → DASH.js HTML test client
-├── assets/                  → .mpd + .m4s video files (for local testing)
-├── scripts/                 → utils (downloaders, etc.)
+proxy/
+├── cmd/                     # Main entry points for the proxy
+├── internal/                # Core application logic
+│   ├── controllers/         # ABR logic and MPD rewriting
+│   ├── storage/             # Cache management
+│   └── metrics/             # Metrics and observability
+services/                    # IPFS, Prometheus, Bootstrap, and Proxy config files
+docker-compose.yaml          # Execute project using Docker
 ```
 
 ---
+
+## 📈 Future Improvements
+
+- **Multi-Replica Awareness**: Enhance ABR logic to account for multiple replicas in IPFS.
+- **Advanced Caching Policies**: Implement predictive caching based on access patterns.
+- **Support for HLS**: Extend support to HLS manifests in addition to DASH.
+- **Improved Load Balancing**: Optimize proxy performance under high traffic.
+
+---
+
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).
