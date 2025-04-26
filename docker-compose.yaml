@@ -11,8 +11,8 @@ services:
       - ./bp/idp:/usr/local/bin/app/tmp/idp           # input video directories should be here (bp/idp)
     depends_on:
       - ipfs0
-      - ipfs1
-      - ipfs2
+      # - ipfs1
+      # - ipfs2
 
   telescope:
     build:
@@ -24,10 +24,11 @@ services:
     volumes:
       - proxydata:/usr/local/bin/app/tmp
       - ./services/.proxy.env:/usr/local/bin/app/.env
-    depends_on:
-      - bootstrap
-      - jaeger
-      - prometheus
+      - ./public:/usr/local/bin/app/public
+    # depends_on:
+    #   - bootstrap
+    #   - jaeger
+    #   - prometheus
 
   jaeger:
     image: jaegertracing/all-in-one:latest
