@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// MPDBuilder is a structure that builds the MPD file
+// MPDBuilder is a structure that handles the building of MPD files
 type MPDBuilder struct {
 	Logr *zap.Logger
 }
