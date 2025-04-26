@@ -1,10 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-	"regexp"
-	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
@@ -13,7 +9,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const alpha = 1 / 3
+const (
+	alphaFactor       = 0.5 // adjustment factor for real and estimated bandwidth
+	replicationFactor = 0.3 // replication factor for bandwidth adjustment based on replication
+)
 
 // AbrRewriter is a structure that rewrites the MPD file based on the current bandwidth
 type AbrRewriter struct {
@@ -68,16 +67,28 @@ func (p *AbrRewriter) RewriteMPD(original []byte, cid string, tc float64) ([]byt
 
 				// construct the full Media path
 				mediaTemplate := *adapt.SegmentTemplate.Media
-				fullPath := p.constructFullPath(mediaTemplate, *rep.ID, i+1)
+				fullPath := constructFullPath(mediaTemplate, *rep.ID, i+1)
 
-				// adjust bandwidth based on cache status
-				var newBw float64
+				// adjust bandwidth based on cache status and replication factor
+				var (
+					bw    = float64(*rep.Bandwidth)
+					newBw float64
+				)
 				if p.Cache.Exists(fullPath) {
 					p.Logr.Info("segment is cached", zap.String("path", fullPath))
-					newBw = min((tc-p.tg)*alpha, float64(*rep.Bandwidth)*(1-alpha))
+					newBw = (tc-p.tg)*alphaFactor + bw*(1-alphaFactor)
 				} else {
 					p.Logr.Info("segment is not cached", zap.String("path", fullPath))
-					newBw = max((tc-p.tn)*(1-alpha), float64(*rep.Bandwidth)*alpha)
+					newBw = (tc-p.tn)*alphaFactor + bw*(1-alphaFactor)
+				}
+
+				// apply probabilistic adjustment based on replication factor
+				if shouldSelectReplica(replicationFactor) {
+					p.Logr.Info("next replica selected for adjustment", zap.String("path", fullPath))
+					newBw *= (1 + replicationFactor) // increase bandwidth slightly
+				} else {
+					p.Logr.Info("next replica not selected for adjustment", zap.String("path", fullPath))
+					newBw *= (1 - replicationFactor) // decrease bandwidth slightly
 				}
 
 				// ensure bandwidth is at least 1 Mbps
@@ -90,25 +101,4 @@ func (p *AbrRewriter) RewriteMPD(original []byte, cid string, tc float64) ([]byt
 	}
 
 	return tree.Encode()
-}
-
-// constructFullPath replaces placeholders in the Media template with actual values
-func (p *AbrRewriter) constructFullPath(template, representationID string, number int) string {
-	// replace $RepresentationID$ with the actual representation ID
-	path := strings.ReplaceAll(template, "$RepresentationID$", representationID)
-
-	// replace $Number%05d$ with the formatted number
-	numberPlaceholder := regexp.MustCompile(`\$Number%0(\d+)d\$`)
-	path = numberPlaceholder.ReplaceAllStringFunc(path, func(match string) string {
-		width, _ := strconv.Atoi(match[8 : len(match)-2]) // Extract width from %05d
-		return fmt.Sprintf("%0*d", width, number)
-	})
-
-	// remove "/stream" from the path
-	path = strings.ReplaceAll(path, "/stream", "")
-
-	// construct the relative path by trimming the "/api/" prefix
-	relativePath := strings.TrimPrefix(path, "/api/")
-
-	return relativePath
 }
