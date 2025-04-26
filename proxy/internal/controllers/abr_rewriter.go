@@ -13,6 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const alpha = 1 / 3
+
 // AbrRewriter is a structure that rewrites the MPD file based on the current bandwidth
 type AbrRewriter struct {
 	Cache *cache.Cache
@@ -72,10 +74,10 @@ func (p *AbrRewriter) RewriteMPD(original []byte, cid string, tc float64) ([]byt
 				var newBw float64
 				if p.Cache.Exists(fullPath) {
 					p.Logr.Info("segment is cached", zap.String("path", fullPath))
-					newBw = tc - p.tg
+					newBw = (tc - p.tg) * alpha
 				} else {
 					p.Logr.Info("segment is not cached", zap.String("path", fullPath))
-					newBw = tc - p.tn
+					newBw = (tc - p.tn) * (1 - alpha)
 				}
 
 				// ensure bandwidth is at least 1 Mbps
