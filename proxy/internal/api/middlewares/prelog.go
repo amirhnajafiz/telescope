@@ -14,6 +14,12 @@ func Prelog(logr *zap.Logger) func(*fiber.Ctx) error {
 			zap.String("path", c.Path()),
 		)
 
+		logr.Debug("Headers",
+			zap.String("seg-q", c.Get("X-Segment-Quality")),
+			zap.String("bw", c.Get("X-Bandwidth")),
+			zap.String("rt", c.Get("X-Stall-Rate")),
+		)
+
 		return c.Next()
 	}
 }

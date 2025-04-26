@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Telescope Player</title>
-    <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dashjs/4.4.1/dash.all.min.js"></script>
     <style>
       body {
         font-family: sans-serif;
@@ -37,69 +37,87 @@
 
       const player = dashjs.MediaPlayer().create();
       const video = document.querySelector("#videoPlayer");
-      player.initialize(video, mpdUrl, true);
-      video.play();
 
-      let xHeaders = {}; // Object to store X-headers from server responses
+      let stallStartTime = 0;
+      let totalStallTime = 0;
 
+      // Track stall time
+      player.on(dashjs.MediaPlayer.events.BUFFER_EMPTY, () => {
+        console.log("BUFFER_EMPTY event triggered");
+        stallStartTime = performance.now();
+      });
+
+      player.on(dashjs.MediaPlayer.events.BUFFER_LOADED, () => {
+        console.log("BUFFER_LOADED event triggered");
+        if (stallStartTime > 0) {
+          const stallDuration = performance.now() - stallStartTime;
+          totalStallTime += stallDuration;
+          console.log(
+            `Stall duration added: ${stallDuration}ms, Total stall time: ${totalStallTime}ms`
+          );
+          stallStartTime = 0;
+        }
+      });
+
+      // event listeners
       player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
-        document.getElementById('log').innerText = `Client ID: ${clientID}`;
+        document.getElementById("log").innerText = `Client ID: ${clientID}`;
       });
-
-      player.on(dashjs.MediaPlayer.events.FRAGMENT_LOADING_STARTED, function (e) {
-        console.log("Loading segment:", e.request.url);
-      });
-
+      player.on(
+        dashjs.MediaPlayer.events.FRAGMENT_LOADING_STARTED,
+        function (e) {
+          console.log("Loading segment:", e.request.url);
+          console.log("Response:", e);
+        }
+      );
       player.on(dashjs.MediaPlayer.events.MANIFEST_LOADED, function (e) {
         console.log("📜 Manifest event object:", e);
       });
-
-      player.on(dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED, function (e) {
-        console.log(`🎚️ Quality changed: type=${e.mediaType}, new index=${e.newQuality}`);
-      });
-
+      player.on(
+        dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED,
+        function (e) {
+          console.log(
+            `🎚️ Quality changed: type=${e.mediaType}, new index=${e.newQuality}`
+          );
+        }
+      );
       player.on(dashjs.MediaPlayer.events.BUFFER_LEVEL_UPDATED, (e) => {
         console.log(`📊 Buffer level: ${e.bufferLevel.toFixed(2)}s`);
       });
 
       // Extend RequestModifier to send additional headers
-      player.extend("RequestModifier", () => ({
-        modifyRequestHeader: function (xhr) {
-          // Attach client ID to all outgoing requests
-          xhr.setRequestHeader("X-Client-ID", clientID);
+      player.extend(
+        "RequestModifier",
+        function () {
+          return {
+            modifyRequestHeader: function (xhr) {
+              xhr.setRequestHeader("X-Client-ID", clientID);
 
-          // Attach captured X-headers to outgoing requests
-          for (const [key, value] of Object.entries(xHeaders)) {
-            xhr.setRequestHeader(key, value);
-          }
+              // Add bandwidth, stall rate, and video quality
+              const bandwidth = player.getAverageThroughput("video");
+              const totalVideoTime = video.duration || 1; // Avoid division by zero
+              const stallRate = totalStallTime / totalVideoTime; // Convert ms to seconds
 
-          // Attach segment quality
-          const qualityIndex = player.getQualityFor("video");
-          xhr.setRequestHeader("X-Segment-Quality", qualityIndex);
+              const qualityIndex = player.getQualityFor("video");
 
-          // Attach bandwidth
-          const bandwidth = player.getAverageThroughput("video");
-          xhr.setRequestHeader("X-Bandwidth", bandwidth);
+              xhr.setRequestHeader("X-Bandwidth", bandwidth);
+              xhr.setRequestHeader("X-Stall-Rate", stallRate.toFixed(10));
+              xhr.setRequestHeader("X-Segment-Quality", qualityIndex);
 
-          // Attach stall rate (buffer level)
-          const bufferLevel = player.getBufferLength("video");
-          xhr.setRequestHeader("X-Stall-Rate", bufferLevel);
+              // Attach captured X-headers to outgoing requests
+              for (const [key, value] of Object.entries(xHeaders)) {
+                xhr.setRequestHeader(key, value);
+              }
 
-          return xhr;
+              return xhr;
+            },
+          };
         },
-        modifyRequestResponse: function (xhr) {
-          // Capture X-headers from the server response
-          const headers = xhr.getAllResponseHeaders().split("\r\n");
-          headers.forEach(header => {
-            const [key, value] = header.split(": ");
-            if (key && key.startsWith("X-Server-")) {
-              xHeaders[key] = value;
-            }
-          });
+        true
+      );
 
-          return xhr.response;
-        }
-      }), true);
+      player.initialize(video, mpdUrl, true);
+      video.play();
     </script>
   </body>
 </html>
