@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
 
@@ -13,39 +14,52 @@ import (
 type AbrRewriter struct {
 	Cache *cache.Cache
 	Logr  *zap.Logger
+
+	ipfsBW  float64
+	ipfsRTT float64
+	lock    sync.Mutex
 }
 
 // NewAbrRewriter creates a new instance of AbrRewriter
 func NewAbrRewriter(cache *cache.Cache, logr *zap.Logger) *AbrRewriter {
 	return &AbrRewriter{
-		Cache: cache,
-		Logr:  logr,
+		Cache:   cache,
+		Logr:    logr,
+		ipfsBW:  0,
+		ipfsRTT: 0,
+		lock:    sync.Mutex{},
 	}
 }
 
-// RewriteMPD rewrites the MPD file based on the current bandwidth and cache status
-func (p *AbrRewriter) RewriteMPD(
-	original []byte,
-	clientID string,
-	cid string,
-	curBW,
-	cachedBW,
-	uncachedBW float64,
-) ([]byte, error) {
-	p.Logr.Info("rewriting MPD", zap.String("clientId", clientID), zap.String("cid", cid))
+// SetIpfsBandwidth sets the IPFS bandwidth
+func (p *AbrRewriter) SetIpfsBandwidth(bw float64) {
+	p.lock.Lock()
+	p.ipfsBW = bw
+	p.lock.Unlock()
+}
 
+// GetIpfsBandwidth returns the IPFS RTT
+func (p *AbrRewriter) SetIpfsRTT(rtt float64) {
+	p.lock.Lock()
+	p.ipfsRTT = rtt
+	p.lock.Unlock()
+}
+
+// RewriteMPD rewrites the MPD file based on the current bandwidth and cache status
+func (p *AbrRewriter) RewriteMPD(original []byte, cid string, ebw float64) ([]byte, error) {
+	p.Logr.Info("rewriting MPD", zap.String("cid", cid), zap.Float64("bandwidth", ebw))
+
+	// create a copy of the original MPD
 	tree := new(mpd.MPD)
 	if err := tree.Decode(original); err != nil {
 		return nil, err
 	}
 
-	Tc := curBW
-	Tg := cachedBW
-	Tn := uncachedBW
-
+	// set the media and initialization paths
 	initPath := fmt.Sprintf("/api/%s/stream/init-stream$RepresentationID$.m4s", cid)
 	mediaPath := fmt.Sprintf("/api/%s/stream/chunk-stream$RepresentationID$-$Number%%05d$.m4s", cid)
 
+	// calculate the bandwidth
 	for _, period := range tree.Period {
 		for _, adapt := range period.AdaptationSets {
 			// rewrite SegmentTemplate paths
@@ -60,16 +74,26 @@ func (p *AbrRewriter) RewriteMPD(
 					rep.SegmentTemplate.Media = &mediaPath
 					rep.SegmentTemplate.Initialization = &initPath
 				}
+
 				bw := float64(*rep.Bandwidth)
 
-				var adjustment float64
+				// adjust bandwidth based on cache status
+				var newBw float64
 				if _, err := p.Cache.Retrieve(*rep.ID); err == nil {
-					adjustment = Tc - Tg
+					// if cached, set bandwidth to the minimum of actual bandwidth and estimated bandwidth
+					newBw = min(bw, ebw)
 				} else {
-					adjustment = Tc - Tn
+					// if not cached, involve IPFS bandwidth and RTT
+					if p.ipfsRTT > 0 {
+						ipfsAdjustedBw := p.ipfsBW / p.ipfsRTT
+						newBw = max(bw, ipfsAdjustedBw)
+					} else {
+						newBw = bw // fallback to actual bandwidth if RTT is zero
+					}
 				}
 
-				newBw := max(bw+adjustment, 1)
+				// ensure bandwidth is at least 1
+				newBw = max(newBw, 1)
 				tmp := uint64(newBw)
 				rep.Bandwidth = &tmp
 			}
