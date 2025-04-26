@@ -27,8 +27,10 @@ func RegisterAPI(cfg *config.Config) (*api.API, error) {
 	var tr trace.Tracer
 	if len(cfg.Jaeger) > 0 {
 		tr, err = tracing.NewProductionTracer(cfg.Jaeger)
+		logger.Info("Jaeger tracing enabled")
 	} else {
 		tr, err = tracing.NewDevelopmentTracer()
+		logger.Info("Jaeger tracing disabled")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to create tracer: %w", err)
