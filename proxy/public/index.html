@@ -67,7 +67,6 @@
         dashjs.MediaPlayer.events.FRAGMENT_LOADING_STARTED,
         function (e) {
           console.log("Loading segment:", e.request.url);
-          console.log("Response:", e);
         }
       );
       player.on(dashjs.MediaPlayer.events.MANIFEST_LOADED, function (e) {
@@ -96,18 +95,13 @@
               // Add bandwidth, stall rate, and video quality
               const bandwidth = player.getAverageThroughput("video");
               const totalVideoTime = video.duration || 1; // Avoid division by zero
-              const stallRate = totalStallTime / totalVideoTime; // Convert ms to seconds
+              const stallRate = totalStallTime / totalVideoTime;
 
               const qualityIndex = player.getQualityFor("video");
 
               xhr.setRequestHeader("X-Bandwidth", bandwidth);
               xhr.setRequestHeader("X-Stall-Rate", stallRate.toFixed(10));
               xhr.setRequestHeader("X-Segment-Quality", qualityIndex);
-
-              // Attach captured X-headers to outgoing requests
-              for (const [key, value] of Object.entries(xHeaders)) {
-                xhr.setRequestHeader(key, value);
-              }
 
               return xhr;
             },
