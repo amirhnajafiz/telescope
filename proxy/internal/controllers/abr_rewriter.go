@@ -55,31 +55,19 @@ func (p *AbrRewriter) RewriteMPD(original []byte, cid string, ebw float64) ([]by
 		return nil, err
 	}
 
-	// set the media and initialization paths
-	initPath := fmt.Sprintf("/api/%s/stream/init-stream$RepresentationID$.m4s", cid)
-	mediaPath := fmt.Sprintf("/api/%s/stream/chunk-stream$RepresentationID$-$Number%%05d$.m4s", cid)
-
 	// calculate the bandwidth
 	for _, period := range tree.Period {
 		for _, adapt := range period.AdaptationSets {
-			// rewrite SegmentTemplate paths
-			if adapt.SegmentTemplate != nil {
-				adapt.SegmentTemplate.Media = &mediaPath
-				adapt.SegmentTemplate.Initialization = &initPath
-			}
-
 			for i := range adapt.Representations {
 				rep := &adapt.Representations[i]
-				if rep.SegmentTemplate != nil {
-					rep.SegmentTemplate.Media = &mediaPath
-					rep.SegmentTemplate.Initialization = &initPath
-				}
-
 				bw := float64(*rep.Bandwidth)
 
 				// adjust bandwidth based on cache status
 				var newBw float64
-				if _, err := p.Cache.Retrieve(*rep.ID); err == nil {
+
+				fmt.Println("Cache status for representation ID:", *rep.ID)
+
+				if p.Cache.Exists(*rep.ID) {
 					// if cached, set bandwidth to the minimum of actual bandwidth and estimated bandwidth
 					newBw = min(bw, ebw)
 				} else {
