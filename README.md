@@ -2,8 +2,6 @@
 
 **Telescope** is a smart adaptive bitrate (ABR) proxy system designed for streaming content over the InterPlanetary File System (IPFS). It dynamically adjusts video quality based on network conditions and cache awareness, enhancing the efficiency and user experience of decentralized video delivery.
 
----
-
 ## 🚀 Features
 
 - **Dynamic ABR Logic**: Rewrites DASH MPDs in real-time using IPFS, Gateway, and Client bandwidth estimations.
@@ -14,8 +12,6 @@
 - **Improved Architecture**: Clean, modular project structure with faster service using Go-Fiber.
 - **Scalable Proxy System**: Designed to handle high traffic and large-scale deployments.
 
----
-
 ## 🆕 What’s New in This Version?
 
 - Migration from **Gin** to **Go-Fiber** for improved performance.
@@ -23,8 +19,6 @@
 - Enhanced observability with **Prometheus metrics** and **OpenTelemetry tracing**.
 - File-based segment **cache tracking system** for better cache management.
 - Support for **stateless microservices** to improve scalability and reliability.
-
----
 
 ## 📖 How Telescope Works
 
@@ -58,8 +52,6 @@ Proxy-->>Client: Stream segment
 ![](.github/assets/diagram.svg)
 ![](.github/assets/sequence.svg)
 
----
-
 ## 📊 Metrics and Observability
 
 Telescope provides real-time metrics and distributed tracing to support debugging, monitoring, and performance optimization.
@@ -77,8 +69,6 @@ Telescope provides real-time metrics and distributed tracing to support debuggin
 - **Prometheus**: Exposes metrics at `:9090/metrics`.
 - **OpenTelemetry**: Provides distributed tracing with full support for Jaeger.
 
----
-
 ## 📂 Project Structure
 
 ```
@@ -92,16 +82,12 @@ services/                    # IPFS, Prometheus, Bootstrap, and Proxy config fil
 docker-compose.yaml          # Execute project using Docker
 ```
 
----
-
 ## 📈 Future Improvements
 
 - **Multi-Replica Awareness**: Enhance ABR logic to account for multiple replicas in IPFS.
 - **Advanced Caching Policies**: Implement predictive caching based on access patterns.
 - **Support for HLS**: Extend support to HLS manifests in addition to DASH.
 - **Improved Load Balancing**: Optimize proxy performance under high traffic.
-
----
 
 ## Run using Docker
 
@@ -118,8 +104,6 @@ docker-compose.yaml          # Execute project using Docker
 - `localhost:5050` : Telescope proxy UI
 - `localhost:9090` : Prometheus UI
 - `localhost:16686` : Jaeger UI
-
----
 
 ## 📜 License
 
