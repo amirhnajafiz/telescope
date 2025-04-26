@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/amirhnajafiz/telescope/pkg/estimator"
-	"github.com/amirhnajafiz/telescope/pkg/parser"
-
 	"github.com/gofiber/fiber/v2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -34,37 +31,34 @@ func (a *API) getContent(ctx *fiber.Ctx) error {
 	if err != nil {
 		a.Logr.Error("failed to fetch mpd", zap.String("cid", cid), zap.Error(err))
 
-		a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), "/api/content").Inc()
+		a.Metrics.SysErrorCount.WithLabelValues("/api/content").Inc()
 
 		return ctx.Status(fiber.StatusBadGateway).SendString("failed to fetch .mpd")
 	}
 
-	a.Metrics.RoundTripTime.WithLabelValues(ctx.Method(), "/api/content").Observe(float64(rtt))
-
-	// get the header map from the request
-	headerMap := ctx.Locals("headerMap").(map[string]float64)
+	a.Metrics.IPFSRTT.Observe(float64(rtt))
+	a.Metrics.IPFSBandwidth.Set(float64(len(mpd)) / float64(rtt))
 
 	// rewrite MPD via ABR policy
 	rewritten, err := a.ABRRewriter.RewriteMPD(
 		mpd,
 		clientID,
 		cid,
-		headerMap["cached"],
-		headerMap["uncached"],
-		headerMap["current"],
+		0,
+		0,
+		0,
 	)
 	if err != nil {
 		a.Logr.Error("failed to rewrite mpd", zap.String("cid", cid), zap.Error(err))
 
-		a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), "/api/content").Inc()
+		a.Metrics.SysErrorCount.WithLabelValues("/api/content").Inc()
 
 		return ctx.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("failed to rewrite manifest:\n %s", err))
 	}
 
-	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), "/api/content").Add(float64(len(rewritten)))
+	a.Metrics.SysBytesTransferred.WithLabelValues("/api/content").Add(float64(len(rewritten)))
 
 	ctx.Set("Content-Type", "application/dash+xml")
-	ctx.Set("X-Server-BW", parser.ParseMapToHeader(headerMap))
 
 	return ctx.Send(rewritten)
 }
@@ -97,27 +91,23 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	segment, err := a.Cache.Retrieve(cacheKey)
 	if err != nil {
 		cached = false
-		a.Logr.Warn("cache miss", zap.String("cid", cid), zap.String("filename", filename), zap.Error(err))
-		a.Metrics.CacheMisses.Inc()
+		a.Metrics.SysCacheMisses.Inc()
 	} else {
 		cached = true
-		a.Logr.Info("cache hit", zap.String("cid", cid), zap.String("filename", filename))
-		a.Metrics.CacheHits.Inc()
+		a.Metrics.SysCacheHits.Inc()
 	}
 
 	// set the span attributes
 	span.SetAttributes(
 		attribute.String("cid", cid),
-		attribute.String("filename", filename),
 		attribute.String("clientId", clientId),
-		attribute.Bool("cached", cached),
 	)
 
 	// calculate cache ratio
 	total := float64(a.Cache.GetHitCounts() + a.Cache.GetMissCounts())
 	if total > 0 {
 		ratio := float64(a.Cache.GetHitCounts()) / total
-		a.Metrics.CacheRatio.Set(ratio)
+		a.Metrics.SysCacheRatio.Set(ratio)
 	}
 
 	// fetch the segment from IPFS if not cached
@@ -125,29 +115,12 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 	if !cached {
 		segment, _, err = a.IPFS.Get(fmt.Sprintf("%s/%s", cid, filename))
 		if err != nil {
-			a.Metrics.ErrorCount.WithLabelValues(ctx.Method(), "/api/stream").Inc()
+			a.Logr.Error("failed to fetch segment", zap.String("cid", cid), zap.String("filename", filename), zap.Error(err))
+			a.Metrics.SysErrorCount.WithLabelValues("/api/stream").Inc()
 			return ctx.Status(fiber.StatusBadGateway).SendString("fetch failed")
 		}
 	}
 	duration := time.Since(start)
-
-	// get the header map from the request
-	headerMap := ctx.Locals("headerMap").(map[string]float64)
-
-	// record the download in the ABR rewriter
-	xsb, xsc, xsu := estimator.Estimate(
-		len(segment),
-		duration,
-		cached,
-		headerMap["cached"],
-		headerMap["uncached"],
-		headerMap["current"],
-	)
-
-	// update the header map
-	headerMap["cached"] = xsc
-	headerMap["uncached"] = xsu
-	headerMap["current"] = xsb
 
 	// cache the segment
 	if !cached {
@@ -160,15 +133,13 @@ func (a *API) streamContent(ctx *fiber.Ctx) error {
 			)
 		}
 
-		a.Metrics.LocalStorageSize.Add(float64(len(segment)))
-		a.Metrics.Bandwidth.WithLabelValues(ctx.Method(), "/api/stream").Add(float64(len(segment) / int(duration.Microseconds())))
-		a.Metrics.RoundTripTime.WithLabelValues(ctx.Method(), "/api/stream").Observe(float64(duration.Microseconds()))
+		a.Metrics.IPFSBandwidth.Set(float64(len(segment)) / float64(duration.Microseconds()))
+		a.Metrics.IPFSRTT.Observe(float64(duration.Microseconds()))
 	}
 
-	a.Metrics.BytesTransferred.WithLabelValues(ctx.Method(), "/api/stream").Add(float64(len(segment)))
+	a.Metrics.SysBytesTransferred.WithLabelValues("/api/stream").Add(float64(len(segment)))
 
 	ctx.Set("Content-Type", "video/mp4")
-	ctx.Set("X-Server-BW", parser.ParseMapToHeader(headerMap))
 
 	return ctx.Send(segment)
 }

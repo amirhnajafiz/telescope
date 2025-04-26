@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/amirhnajafiz/telescope/internal/api/middlewares"
 	"github.com/amirhnajafiz/telescope/internal/controllers"
 	"github.com/amirhnajafiz/telescope/internal/storage/cache"
 	"github.com/amirhnajafiz/telescope/internal/storage/ipfs"
@@ -51,10 +50,6 @@ func (a *API) Register(app *fiber.App) {
 
 	// create API groups
 	contents := app.Group("/api")
-
-	// middleware to HTTP extract headers
-	contents.Use(middlewares.Prelog(a.Logr.Named("prelog")))
-	contents.Use(middlewares.ExtractHeaders)
 
 	// define the contents endpoints
 	contents.Get("/:cid", a.getContent)
