@@ -30,6 +30,4 @@ for VIDEO in "$INPUT_DIR"/*.mp4; do
         "$VIDEO_OUTPUT_DIR/stream.mpd"
 done
 
-touch "bp/data.txt"
-
 echo "Encoding completed for all videos in $INPUT_DIR."
