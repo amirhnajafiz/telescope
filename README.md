@@ -94,6 +94,7 @@ Quality of Experience (QoE) is evaluated using two key metrics: **Video Quality*
 
 - **Prometheus**: Exposes metrics at `:9090/metrics`.
 - **OpenTelemetry**: Provides distributed tracing with full support for Jaeger.
+- **Zap Logger**: Log enhancement using zap logger.
 
 ## 📂 Project Structure
 
@@ -103,8 +104,9 @@ proxy/                       # Telescope project
 ├── cmd/                     # Main entry points for the proxy
 ├── internal/                # Core application logic
 │   ├── controllers/         # ABR logic and MPD rewriting
-│   ├── storage/             # Cache management
-│   └── metrics/             # Metrics and observability
+|   ├── logr/                # Zap logger
+│   ├── storage/             # IPFS and Cache management
+│   └── telemetry/           # Metrics and observability
 public/                      # Telescope's client written by DASH.js
 scripts/                     # Project setup scripts
 services/                    # IPFS, Prometheus, Bootstrap, and Proxy config files
@@ -130,6 +132,14 @@ After a successful deployment, you should be able to see the followings:
 - Telescope proxy UI at `localhost:5050`
 - Prometheus UI at `localhost:9090`
 - Jaeger UI at `localhost:16686`
+
+### Services
+
+- `bootstrap`: Uploads all video file in `bp/idp` to IPFS. It stores the results in `bp/data.txt`.
+- `telescope`: Proxy system.
+- `jaeger`: Tracing system.
+- `prometheus`: Monitoring system.
+- `ipfs(0-1-2)`: Three instances of Kubo.
 
 ## 📈 Future Improvements
 
