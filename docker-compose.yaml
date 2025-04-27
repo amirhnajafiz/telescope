@@ -25,10 +25,10 @@ services:
       - proxydata:/usr/local/bin/app/tmp
       - ./services/.proxy.env:/usr/local/bin/app/.env
       - ./public:/usr/local/bin/app/public
-    # depends_on:
-    #   - bootstrap
-    #   - jaeger
-    #   - prometheus
+    depends_on:
+      - bootstrap
+      - jaeger
+      - prometheus
 
   jaeger:
     image: jaegertracing/jaeger:latest
