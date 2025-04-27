@@ -1,7 +1,19 @@
-Index, ABR Algorithm, Caching, Proxy Scale, Number of Tests
-1, old, False, 1, 50
-2, new, False, 1, 50
-3, old, True, 1, 50
-4, new, True, 1, 50
-5, new, True, 2, 10
-6, new, True, 3, 10
+Index, Smart ABR, Caching, Proxy Replication, Number of Tests
+1, throughput-based, None, 1, 10
+2, throughput-based, None, 2, 5
+3, throughput-based, None, 3, 5
+4, throughput-based, In-memory, 1, 10
+5, throughput-based, In-memory, 2, 5
+6, throughput-based, In-memory, 3, 5
+7, throughput-based, File, 1, 10
+8, throughput-based, File, 2, 5
+9, throughput-based, File, 3, 5
+10, statistics-based, None, 1, 10
+11, statistics-based, None, 2, 5
+12, statistics-based, None, 3, 5
+13, statistics-based, In-memory, 1, 10
+14, statistics-based, In-memory, 2, 5
+15, statistics-based, In-memory, 3, 5
+16, statistics-based, File, 1, 10
+17, statistics-based, File, 2, 5
+18, statistics-based, File, 3, 5
