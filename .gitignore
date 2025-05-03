@@ -35,5 +35,5 @@ go.work.sum
 # test assets
 *.m4s
 *.mpd
-*.mp4
 tmp/
+assets/*
