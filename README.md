@@ -42,6 +42,8 @@ This version of Telescope is an enhanced iteration of the [NetSys Lab's Telescop
 
 ## 📖 How Telescope Works
 
+![Telescope Demo](assets/telescope_demo.gif)
+
 Telescope acts as a smart proxy between a DASH video player and IPFS. It intercepts video segment requests, estimates network conditions and caching status, and dynamically rewrites the video manifest (MPD) to guide adaptive quality selection.
 
 ### Workflow
