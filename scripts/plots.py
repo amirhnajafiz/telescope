@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-df = pd.read_csv('final_dataset.csv')
+df = pd.read_csv('./analysis/datasets/final_dataset.csv')
 
 filtered_df = df[df['Proxy Replication'] == 1].copy()
 
