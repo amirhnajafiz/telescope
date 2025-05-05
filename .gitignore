@@ -37,3 +37,15 @@ go.work.sum
 *.mpd
 tmp/
 assets/*
+
+# IDEs and editors
+# JetBrains IDEs
+.idea/
+# Visual Studio Code
+.vscode/
+# Visual Studio Code workspace settings
+.vscode-test/
+
+# OS generated files
+.DS_Store
+Thumbs.db

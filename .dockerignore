@@ -1,6 +1,19 @@
-# dir
+# Dockerfile
 build/
 
-# extra
+# git
+.git
+.gitignore
+.github
+
+# golang
+vendor/
+
+# unused files
 README.md
 docker-compose.yml
+dependencies.toml
+
+# setup scripts
+setup.sh
+scripts/
