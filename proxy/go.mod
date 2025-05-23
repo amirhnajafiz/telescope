@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/caarlos0/env/v10 v10.0.0
-	github.com/gofiber/fiber/v2 v2.52.6
+	github.com/gofiber/fiber/v2 v2.52.7
 	github.com/gofiber/template/html/v2 v2.1.3
 	github.com/hare1039/go-mpd v0.0.0-20210711232145-e1e2e1b7d61a
 	github.com/ipfs/go-ipfs-api v0.7.0
